@@ -1,0 +1,115 @@
+---
+import { motionConfig } from "../../config";
+
+interface Props {
+	class?: string;
+	rays?: number;
+	position?: "right" | "left" | "center";
+	opacity?: number;
+}
+
+const {
+	class: className = "",
+	rays = 56,
+	position = "right",
+	opacity = 0.18,
+} = Astro.props;
+
+const enabled = motionConfig.enabled && motionConfig.decor.rays;
+const drift = motionConfig.ambient.sectionDrift;
+---
+
+{enabled && (
+	<div
+		class:list={["ray-field", `ray-field--${position}`, className]}
+		style={`--ray-count: ${rays}; --ray-opacity: ${opacity}`}
+		aria-hidden="true"
+		data-ray-field
+		data-field-drift={drift ? "" : undefined}
+	/>
+)}
+
+<style>
+	.ray-field {
+		position: absolute;
+		z-index: 1;
+		width: clamp(28rem, 58vw, 50rem);
+		aspect-ratio: 1;
+		color: currentColor;
+		background: repeating-conic-gradient(
+			from 0deg,
+			currentColor 0 0.8deg,
+			transparent 0.8deg calc(360deg / var(--ray-count, 56))
+		);
+		opacity: var(--ray-opacity, 0.18);
+		pointer-events: none;
+		-webkit-mask-image: radial-gradient(
+			circle at center,
+			transparent 0 30%,
+			#000 32% 68%,
+			transparent 70%
+		);
+		mask-image: radial-gradient(
+			circle at center,
+			transparent 0 30%,
+			#000 32% 68%,
+			transparent 70%
+		);
+	}
+
+	.ray-field--right {
+		top: 50%;
+		right: -6%;
+		transform: translateY(-50%);
+	}
+
+	.ray-field--left {
+		top: 50%;
+		left: -6%;
+		transform: translateY(-50%);
+	}
+
+	.ray-field--center {
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		html.js[data-motion="on"] .ray-field {
+			opacity: 0;
+		}
+
+		html.js[data-motion="on"] .ray-field.is-open {
+			clip-path: circle(70% at 50% 50%);
+			opacity: var(--ray-opacity, 0.18);
+		}
+
+		html.js[data-motion="on"] .ray-field.is-open.is-drift {
+			animation: ray-open 700ms var(--ease-snap) both;
+		}
+	}
+
+	@keyframes ray-open {
+		from {
+			clip-path: circle(0% at 50% 50%);
+		}
+		to {
+			clip-path: circle(70% at 50% 50%);
+		}
+	}
+
+	@media (max-width: 767px) {
+		.ray-field {
+			display: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		html.js[data-motion="on"] .ray-field {
+			opacity: var(--ray-opacity, 0.18);
+			clip-path: none !important;
+			animation: none !important;
+		}
+	}
+</style>

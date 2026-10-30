@@ -1,0 +1,75 @@
+---
+import { productsConfig, siteConfig } from "../../../config";
+import { resolveAsset } from "../../../utils/assets";
+import { getProductHref } from "../../../utils/products";
+import SectionHeading from "../../atoms/SectionHeading.astro";
+import SectionShell from "../../layout/SectionShell.astro";
+import type { HomeSectionConfig } from "../../../types/config";
+
+interface Props {
+	section: HomeSectionConfig;
+}
+
+const { section } = Astro.props;
+const productsEnabled = siteConfig.page.products.enabled;
+const items = productsConfig.items
+	.filter((item) => item.enabled)
+	.slice(0, productsConfig.homePreviewCount);
+---
+
+<SectionShell section={section}>
+	<SectionHeading
+		index={section.index}
+		eyebrow={section.eyebrow}
+		title={section.title}
+		lead={section.lead}
+		headingId={`${section.id}-title`}
+		actionHref={productsEnabled ? "/products/" : undefined}
+		actionLabel={productsEnabled ? "全部产品" : undefined}
+	/>
+
+	<div class="product-preview-grid" data-reveal style="--reveal-delay: 120ms">
+		{items.map((item) => {
+			const cardHref = productsEnabled ? getProductHref(item) : undefined;
+			const CardTag = (cardHref ? "a" : "div") as "a" | "div";
+
+			return (
+				<CardTag class="product-mini" href={cardHref} data-tilt>
+					<span class="product-mini__media">
+						<img
+							src={resolveAsset(item.image)}
+							alt={item.imageAlt}
+							loading="lazy"
+							decoding="async"
+						/>
+					</span>
+					<span class="product-mini__body">
+						{item.status && <span class="tag">{item.status}</span>}
+						<span class="product-mini__title">{item.title}</span>
+						<span class="product-mini__desc">
+							{item.description}
+						</span>
+					</span>
+				</CardTag>
+			);
+		})}
+	</div>
+</SectionShell>
+
+<style>
+	.product-mini__media {
+		display: block;
+	}
+
+	.product-mini__body .tag {
+		align-self: flex-start;
+	}
+
+	.product-mini__title {
+		display: block;
+	}
+
+	.product-mini__desc {
+		display: block;
+	}
+</style>

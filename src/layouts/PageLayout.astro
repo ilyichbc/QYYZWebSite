@@ -1,0 +1,82 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import PageHero from "../components/layout/PageHero.astro";
+import TrajectoryLines from "../components/atoms/TrajectoryLines.astro";
+import type { PageHeroMedia, SectionDecor } from "../types/config";
+import "../styles/page.css";
+
+interface Props {
+	title: string;
+	description?: string;
+	eyebrow: string;
+	heroTitle: string;
+	lead: string;
+	latin: string;
+	index: string;
+	meta?: string[];
+	noindex?: boolean;
+	hero: PageHeroMedia;
+	/** 头图装饰图元 */
+	decor?: SectionDecor;
+}
+
+const {
+	title,
+	description,
+	eyebrow,
+	heroTitle,
+	lead,
+	latin,
+	index,
+	meta = [],
+	noindex = false,
+	hero,
+	decor = "halftone",
+} = Astro.props;
+---
+
+<BaseLayout
+	title={title}
+	description={description}
+	pageType="page"
+	noindex={noindex}
+>
+	<PageHero
+		eyebrow={eyebrow}
+		title={heroTitle}
+		lead={lead}
+		latin={latin}
+		index={index}
+		meta={meta}
+		image={hero.image}
+		imageAlt={hero.imageAlt}
+		imagePosition={hero.imagePosition}
+		video={hero.video}
+		overlay={hero.overlay}
+		decor={decor}
+	/>
+	<div class="page-content">
+		<TrajectoryLines flow />
+		<span class="page-content__grid" aria-hidden="true"></span>
+		<span class="page-content__matrix" aria-hidden="true"></span>
+		<div class="page-content__rail" aria-hidden="true">
+			<span class="page-content__rail-line"></span>
+			<span class="page-content__rail-ticks"></span>
+		</div>
+		<div class="page-content__inner">
+			<slot />
+		</div>
+	</div>
+</BaseLayout>
+
+<style>
+	.page-content {
+		position: relative;
+		overflow: hidden;
+	}
+
+	.page-content__inner {
+		position: relative;
+		z-index: 1;
+	}
+</style>

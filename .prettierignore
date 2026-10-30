@@ -1,0 +1,12 @@
+技术开发规范.md
+组织框架.md
+plugin/
+public/
+dist/
+.astro/
+node_modules/
+.screenshots/
+.references/
+pnpm-lock.yaml
+
+.claude/

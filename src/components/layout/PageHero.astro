@@ -1,0 +1,150 @@
+---
+import Barcode from "../atoms/Barcode.astro";
+import Image from "../atoms/Image.astro";
+import SpaceLines from "../atoms/SpaceLines.astro";
+import HalftoneField from "../atoms/HalftoneField.astro";
+import ContourField from "../atoms/ContourField.astro";
+import RayField from "../atoms/RayField.astro";
+import { motionConfig } from "../../config";
+import { resolveAsset } from "../../utils/assets";
+import type { MediaOverlay, SectionDecor } from "../../types/config";
+
+interface Props {
+	eyebrow: string;
+	title: string;
+	lead: string;
+	latin: string;
+	index: string;
+	meta?: string[];
+	image: string;
+	imageAlt: string;
+	imagePosition: string;
+	/** 可选视频背景 */
+	video?: string;
+	overlay: MediaOverlay;
+	/** 头图装饰图元 */
+	decor?: SectionDecor;
+}
+
+const {
+	eyebrow,
+	title,
+	lead,
+	latin,
+	index,
+	meta = [],
+	image,
+	imageAlt,
+	imagePosition,
+	video,
+	overlay,
+	decor = "halftone",
+} = Astro.props;
+
+const showDecor = motionConfig.enabled;
+---
+
+<header
+	class:list={[
+		"page-hero",
+		`page-hero--overlay-${overlay}`,
+		overlay === "dark" && "on-media",
+		overlay === "light" && "on-light",
+	]}
+	data-hero
+	data-hero-tone={overlay}
+>
+	{video ? (
+		<video
+			class="page-hero__bg page-hero__bg--video"
+			src={resolveAsset(video)}
+			poster={resolveAsset(image)}
+			autoplay
+			muted
+			loop
+			playsinline
+			preload="metadata"
+			aria-hidden="true"
+		/>
+	) : (
+		image && (
+			<Image
+				src={image}
+				alt={imageAlt}
+				class="page-hero__bg"
+				priority
+				style={`object-position: ${imagePosition}`}
+			/>
+		)
+	)}
+	<div
+		class:list={["page-hero__overlay", `page-hero__overlay--${overlay}`]}
+		aria-hidden="true"
+	/>
+	<span class="page-hero__sheen" aria-hidden="true" />
+	<SpaceLines variant="page" ambient />
+	<span class="page-hero__grid" aria-hidden="true" />
+	<span class="section-spotlight" aria-hidden="true" />
+	{showDecor && <HalftoneField position="full" opacity={0.14} />}
+	{showDecor && decor === "halftone" && (
+		<HalftoneField position="top-right" />
+	)}
+	{showDecor && decor === "contour" && <ContourField variant="page" />}
+	{showDecor && decor === "rays" && <RayField position="right" />}
+	<div class="page-hero__frame" aria-hidden="true">
+		<span></span>
+		<span></span>
+		<span></span>
+		<span></span>
+	</div>
+
+	<div class="container page-hero__inner">
+		<div class="page-hero__head">
+			<div class="page-hero__id" data-reveal>
+				<span class="eyebrow">{eyebrow}</span>
+				<span class="meta-field">
+					<span>{index}</span>
+					<span>{latin}</span>
+				</span>
+			</div>
+			<h1
+				class="page-hero__title display"
+				data-reveal
+				style="--reveal-delay: 70ms"
+			>
+				{title}
+			</h1>
+			<p
+				class="page-hero__lead lead"
+				data-reveal
+				style="--reveal-delay: 140ms"
+			>
+				{lead}
+			</p>
+		</div>
+
+		<div
+			class="page-hero__bottom"
+			data-reveal
+			style="--reveal-delay: 210ms"
+		>
+			<div class="page-hero__bottom-main">
+				<span class="air-bar" aria-hidden="true"></span>
+				<Barcode
+					class="page-hero__barcode"
+					seed={`${index}-${latin}`}
+					label={`${index} / ${latin}`}
+					height={17}
+					count={30}
+				/>
+			</div>
+			{meta.length > 0 && (
+				<div class="meta-field">
+					{meta.map((item) => (
+						<span>{item}</span>
+					))}
+				</div>
+			)}
+		</div>
+	</div>
+</header>

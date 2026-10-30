@@ -1,0 +1,52 @@
+---
+import { homeConfig, siteConfig } from "../../../config";
+import SectionHeading from "../../atoms/SectionHeading.astro";
+import SectionShell from "../../layout/SectionShell.astro";
+import type { HomeSectionConfig } from "../../../types/config";
+
+interface Props {
+	section: HomeSectionConfig;
+}
+
+const { section } = Astro.props;
+const { history } = homeConfig;
+const aboutEnabled = siteConfig.page.about.enabled;
+---
+
+<SectionShell section={section}>
+	<SectionHeading
+		index={section.index}
+		eyebrow={section.eyebrow}
+		title={section.title}
+		lead={section.lead}
+		headingId={`${section.id}-title`}
+		actionHref={aboutEnabled ? "/about/" : undefined}
+		actionLabel={aboutEnabled ? "学校简介" : undefined}
+	/>
+
+	<div class="timeline" data-reveal style="--reveal-delay: 120ms">
+		{history.entries.map((entry) => (
+			<article class="timeline__row">
+				<span class="timeline__year">{entry.year}</span>
+				<span class="timeline__month">{entry.month}</span>
+				<div class="timeline__body">
+					<h3 class="timeline__title">{entry.title}</h3>
+					<p class="timeline__desc">{entry.description}</p>
+				</div>
+				<span class="tag timeline__tag">{entry.tag}</span>
+			</article>
+		))}
+	</div>
+
+	<p class="history-note" data-reveal style="--reveal-delay: 220ms">
+		{history.note}
+	</p>
+</SectionShell>
+
+<style>
+	.history-note {
+		margin-top: 1.4rem;
+		color: var(--muted);
+		font-size: 0.75rem;
+	}
+</style>

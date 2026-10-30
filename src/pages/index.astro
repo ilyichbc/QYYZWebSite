@@ -1,0 +1,22 @@
+---
+import Banner from "../components/layout/Banner.astro";
+import HomeSections from "../components/features/home/HomeSections.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { bannerConfig, siteConfig } from "../config";
+import "../styles/home.css";
+
+const page = siteConfig.page.home;
+---
+
+<BaseLayout
+	title={siteConfig.identity.name}
+	description={page.description}
+	pageType="home"
+	snap
+	transparentHeader={bannerConfig.enabled}
+>
+	{bannerConfig.enabled && <Banner />}
+	<div id="home-content">
+		<HomeSections />
+	</div>
+</BaseLayout>

@@ -1,0 +1,444 @@
+---
+import {
+	bannerConfig,
+	homeConfig,
+	motionConfig,
+	siteConfig,
+} from "../../config";
+import Barcode from "../atoms/Barcode.astro";
+import ButtonLink from "../atoms/ButtonLink.astro";
+import Image from "../atoms/Image.astro";
+import ParticleField from "../atoms/ParticleField.astro";
+import ParticleEcho from "../atoms/ParticleEcho.astro";
+import { resolveAsset } from "../../utils/assets";
+import "../../styles/banner.css";
+
+const { identity, navbar } = siteConfig;
+const { slogan } = bannerConfig;
+
+const logoMode =
+	bannerConfig.logoMode === "inherit"
+		? identity.logo.mode
+		: bannerConfig.logoMode;
+const logoImage =
+	bannerConfig.logoMode === "image"
+		? bannerConfig.logoImage
+		: identity.logo.image;
+const showLogoImage = logoMode === "image" && Boolean(logoImage);
+
+const actions = bannerConfig.actions.filter((action) => {
+	if (!action.enabled) {
+		return false;
+	}
+	if (action.requiresFeature) {
+		return siteConfig.page[action.requiresFeature].enabled;
+	}
+	return true;
+});
+
+const initialSlogan =
+	slogan.mode === "fixed"
+		? slogan.fixed
+		: (slogan.list[0] ?? slogan.hitokoto.fallback[0] ?? identity.tagline);
+
+const enabledSections = homeConfig.sections.filter(
+	(section) => section.enabled,
+);
+const firstSection = enabledSections[0];
+const scrollTarget = firstSection ? `#${firstSection.id}` : "#home-content";
+const totalIndex = String(enabledSections.length + 1).padStart(2, "0");
+---
+
+<section
+	class:list={[
+		"hero",
+		"snap-section",
+		`hero--overlay-${bannerConfig.overlay}`,
+	]}
+	aria-label={`${identity.name} 首屏`}
+	data-hero
+	data-hero-tone={bannerConfig.overlay}
+	data-orbit={motionConfig.ambient.heroOrbit ? "on" : "off"}
+>
+	{bannerConfig.video ? (
+		<video
+			class="hero__bg hero__bg--video"
+			src={resolveAsset(bannerConfig.video)}
+			poster={resolveAsset(bannerConfig.background)}
+			autoplay
+			muted
+			loop
+			playsinline
+			aria-hidden="true"
+		/>
+	) : (
+		<Image
+			src={bannerConfig.background}
+			alt=""
+			class="hero__bg"
+			width={2400}
+			height={1800}
+			priority
+			style={`object-position: ${bannerConfig.backgroundPosition}`}
+		/>
+	)}
+	<div class="hero__veil" aria-hidden="true"></div>
+	<span class="hero__scan" aria-hidden="true"></span>
+	<ParticleEcho />
+	<ParticleField count={44} />
+	<span class="hero__spotlight" aria-hidden="true"></span>
+	<div
+		class="hero__ring"
+		aria-hidden="true"
+		data-orbit={motionConfig.ambient.heroOrbit ? "on" : "off"}
+	>
+		<span class="hero__ring__ticks"></span>
+		<span class="hero__ring__axis"></span>
+	</div>
+	<div class="hero__ghost" aria-hidden="true">
+		{identity.nameLatin}
+	</div>
+
+	{motionConfig.ambient.heroMotes && (
+		<div class="hero__motes" aria-hidden="true">
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+		</div>
+	)}
+
+	{bannerConfig.showGrid && (
+		<div class="hero__grid" aria-hidden="true">
+			<span></span>
+		</div>
+	)}
+	{bannerConfig.showGrain && (
+		<div class="hero__grain" aria-hidden="true"></div>
+	)}
+	{bannerConfig.showFrame && (
+		<div class="hero__frame" aria-hidden="true">
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+		</div>
+	)}
+
+	<div class="container hero__inner">
+		<div class="hero__rail hero__rail--top" data-reveal>
+			<span>{bannerConfig.meta.topLeft}</span>
+			<span>{bannerConfig.meta.topRight}</span>
+		</div>
+
+		<div class="hero__center">
+			<div class="hero__block">
+				<p
+					class="hero__kicker"
+					data-reveal
+					style="--reveal-delay: 60ms"
+				>
+					<span class="eyebrow eyebrow--plain">
+						{bannerConfig.kicker}
+					</span>
+				</p>
+
+				{showLogoImage ? (
+					<div
+						class="hero__logo"
+						data-reveal
+						style="--reveal-delay: 120ms"
+					>
+						<Image
+							src={logoImage}
+							alt={bannerConfig.logoAlt || identity.logo.alt}
+							priority
+						/>
+					</div>
+				) : (
+					<h1
+						class="hero__name"
+						data-reveal
+						style="--reveal-delay: 120ms"
+					>
+						<span class="hero__name-cn">{identity.name}</span>
+						<span class="hero__name-latin">
+							{identity.nameLatin}
+						</span>
+					</h1>
+				)}
+
+				<div
+					class="hero__slogan"
+					data-reveal
+					style="--reveal-delay: 220ms"
+					data-slogan
+					data-slogan-mode={slogan.mode}
+					data-slogan-fixed={slogan.fixed}
+					data-slogan-list={JSON.stringify(slogan.list)}
+					data-slogan-typing={String(slogan.typing)}
+					data-slogan-fallback={JSON.stringify(
+						slogan.hitokoto.fallback,
+					)}
+					data-hitokoto-endpoint={slogan.hitokoto.endpoint}
+					data-hitokoto-categories={JSON.stringify(
+						slogan.hitokoto.categories,
+					)}
+					data-hitokoto-timeout={String(slogan.hitokoto.timeoutMs)}
+				>
+					<span class="hero__slogan-mark" aria-hidden="true">
+						//
+					</span>
+					<p
+						class="hero__slogan-text"
+						data-typing={String(slogan.typing)}
+					>
+						<span data-slogan-visible aria-hidden="true">
+							{initialSlogan}
+						</span>
+						<span class="sr-only" data-slogan-sr>
+							{initialSlogan}
+						</span>
+					</p>
+				</div>
+
+				{actions.length > 0 && (
+					<div
+						class="hero__actions"
+						data-reveal
+						style="--reveal-delay: 300ms"
+					>
+						{actions.map((action) => (
+							<ButtonLink
+								href={action.href}
+								variant={action.variant}
+								external={action.external}
+							>
+								{action.label}
+							</ButtonLink>
+						))}
+					</div>
+				)}
+			</div>
+
+			<aside class="hero__side" data-reveal style="--reveal-delay: 340ms">
+				<div class="hero__side-item">
+					<span class="hero__side-label">LOCATION</span>
+					<span class="hero__side-value">{identity.location}</span>
+				</div>
+				<div class="hero__side-item">
+					<span class="hero__side-label">ESTABLISHED</span>
+					<span class="hero__side-value">
+						{identity.foundingYear}
+					</span>
+				</div>
+				<div class="hero__side-item">
+					<span class="hero__side-label">STATUS</span>
+					<span class="hero__side-value">{navbar.statusText}</span>
+				</div>
+				<div class="hero__side-index" aria-hidden="true">
+					<span>01</span>
+					<span>/</span>
+					<span>{totalIndex}</span>
+				</div>
+				<Barcode
+					class="hero__barcode"
+					seed={`${identity.nameLatin}-${totalIndex}`}
+					label={`${identity.nameLatin} / 01—${totalIndex}`}
+					height={18}
+					count={30}
+				/>
+			</aside>
+		</div>
+
+		<div
+			class="hero__rail hero__rail--bottom"
+			data-reveal
+			style="--reveal-delay: 380ms"
+		>
+			<span>{bannerConfig.meta.bottomLeft}</span>
+			{bannerConfig.scrollHint.enabled && (
+				<a class="hero__scroll" href={scrollTarget}>
+					<span>{bannerConfig.scrollHint.label}</span>
+					<span class="hero__scroll-line" aria-hidden="true"></span>
+				</a>
+			)}
+			<span>{bannerConfig.meta.bottomRight}</span>
+		</div>
+	</div>
+</section>
+
+<script>
+	const sloganElement = document.querySelector<HTMLElement>("[data-slogan]");
+
+	if (sloganElement) {
+		const visible = sloganElement.querySelector<HTMLElement>(
+			"[data-slogan-visible]",
+		);
+		const screenReader =
+			sloganElement.querySelector<HTMLElement>("[data-slogan-sr]");
+		const reduceMotion = window.matchMedia(
+			"(prefers-reduced-motion: reduce)",
+		).matches;
+		const motionOff = document.documentElement.dataset.motion === "off";
+		const canAnimate = !reduceMotion && !motionOff;
+
+		const parseList = (value: string | undefined): string[] => {
+			if (!value) {
+				return [];
+			}
+			try {
+				const parsed = JSON.parse(value);
+				return Array.isArray(parsed)
+					? parsed.filter(
+							(item): item is string => typeof item === "string",
+						)
+					: [];
+			} catch {
+				return [];
+			}
+		};
+
+		const pick = (items: string[], fallback: string): string => {
+			if (items.length === 0) {
+				return fallback;
+			}
+			return items[Math.floor(Math.random() * items.length)] ?? fallback;
+		};
+
+		const mode = sloganElement.dataset.sloganMode ?? "fixed";
+		const fixed = sloganElement.dataset.sloganFixed ?? "";
+		const list = parseList(sloganElement.dataset.sloganList);
+		const fallback = parseList(sloganElement.dataset.sloganFallback);
+		const typing = sloganElement.dataset.sloganTyping === "true";
+		const shouldType = typing && canAnimate;
+
+		let typingToken = 0;
+
+		const setText = (text: string) => {
+			typingToken += 1;
+			if (screenReader) {
+				screenReader.textContent = text;
+			}
+			if (!visible) {
+				return;
+			}
+
+			if (!shouldType) {
+				visible.textContent = text;
+				visible.classList.add("is-live");
+				return;
+			}
+
+			const token = typingToken;
+			visible.textContent = "";
+			visible.classList.add("is-live");
+
+			let index = 0;
+			const step = () => {
+				if (token !== typingToken) {
+					return;
+				}
+				index += 1;
+				visible.textContent = text.slice(0, index);
+				if (index < text.length) {
+					window.setTimeout(step, 42 + Math.random() * 26);
+				}
+			};
+
+			window.setTimeout(step, 320);
+		};
+
+		const replaceText = (text: string) => {
+			typingToken += 1;
+			if (screenReader) {
+				screenReader.textContent = text;
+			}
+			if (!visible) {
+				return;
+			}
+
+			if (!canAnimate) {
+				visible.textContent = text;
+				visible.classList.add("is-live");
+				return;
+			}
+
+			visible.style.opacity = "0";
+			window.setTimeout(() => {
+				visible.textContent = text;
+				visible.classList.add("is-live");
+				visible.style.opacity = "1";
+			}, 220);
+		};
+
+		const localText =
+			mode === "fixed"
+				? fixed
+				: pick(
+						list.length > 0 ? list : fallback,
+						fixed || "博、雅、真、精",
+					);
+
+		setText(localText);
+
+		if (mode === "hitokoto") {
+			const endpoint = sloganElement.dataset.hitokotoEndpoint;
+			const categories = parseList(
+				sloganElement.dataset.hitokotoCategories,
+			);
+			const timeoutMs = Number(
+				sloganElement.dataset.hitokotoTimeout ?? "4500",
+			);
+
+			if (endpoint) {
+				const controller = new AbortController();
+				const timer = window.setTimeout(
+					() => controller.abort(),
+					Number.isFinite(timeoutMs) ? timeoutMs : 4500,
+				);
+
+				const query = new URLSearchParams({ encode: "json" });
+				for (const category of categories) {
+					query.append("c", category);
+				}
+
+				const url = `${endpoint.replace(/\/+$/, "")}/?${query.toString()}`;
+
+				fetch(url, {
+					signal: controller.signal,
+					headers: { Accept: "application/json" },
+				})
+					.then((response) => (response.ok ? response.json() : null))
+					.then((data: unknown) => {
+						if (
+							data &&
+							typeof data === "object" &&
+							"hitokoto" in data &&
+							typeof (data as { hitokoto?: unknown }).hitokoto ===
+								"string"
+						) {
+							const text = (
+								data as { hitokoto: string }
+							).hitokoto.trim();
+							if (text && text !== localText) {
+								replaceText(text);
+							}
+						}
+					})
+					.catch(() => {
+						// 一言不可用时保留本地句子，不影响首屏
+					})
+					.finally(() => {
+						window.clearTimeout(timer);
+					});
+			}
+		}
+	}
+</script>

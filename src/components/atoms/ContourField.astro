@@ -1,0 +1,166 @@
+---
+import { motionConfig } from "../../config";
+
+interface Props {
+	class?: string;
+	variant?: "section" | "page" | "footer";
+	lines?: number;
+	opacity?: number;
+}
+
+const {
+	class: className = "",
+	variant = "section",
+	lines: lineCount = 12,
+	opacity = 0.16,
+} = Astro.props;
+
+const enabled = motionConfig.enabled && motionConfig.decor.contour;
+const draw = motionConfig.narrative.contourDraw;
+const drift = motionConfig.ambient.sectionDrift;
+
+const contours = Array.from({ length: lineCount }, (_, index) => {
+	const radius = 50 + index * 40;
+	const amplitude = 12 + index * 3;
+	const phase = index * 0.7;
+	const points = Array.from({ length: 73 }, (_, step) => {
+		const angle = (step / 72) * Math.PI * 2;
+		const wobble =
+			Math.sin(angle * 3 + phase) * amplitude +
+			Math.cos(angle * 5 - phase) * amplitude * 0.4;
+		const r = radius + wobble;
+		const x = 400 + Math.cos(angle) * r;
+		const y = 300 + Math.sin(angle) * r * 0.72;
+		return `${x.toFixed(1)},${y.toFixed(1)}`;
+	});
+
+	return `M${points.join(" L")} Z`;
+});
+---
+
+{enabled && (
+	<svg
+		class:list={[
+			"contour-field",
+			`contour-field--${variant}`,
+			draw && "contour-field--draw",
+			className,
+		]}
+		style={`--contour-opacity: ${opacity}`}
+		viewBox="0 0 800 600"
+		preserveAspectRatio="xMidYMid slice"
+		aria-hidden="true"
+		data-contour
+		data-field-drift={drift ? "" : undefined}
+	>
+		{contours.map((path, index) => (
+			<path
+				class="contour-field__line"
+				d={path}
+				pathLength="1"
+				style={`--i: ${index}`}
+			/>
+		))}
+	</svg>
+)}
+
+<style>
+	.contour-field {
+		position: absolute;
+		z-index: 1;
+		width: clamp(26rem, 58vw, 52rem);
+		height: clamp(22rem, 48vw, 42rem);
+		color: currentColor;
+		opacity: var(--contour-opacity, 0.16);
+		pointer-events: none;
+		overflow: visible;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.contour-field.is-drift {
+			animation: contour-drift 16s ease-in-out infinite alternate;
+		}
+	}
+
+	@keyframes contour-drift {
+		from {
+			transform: translate3d(0, 0, 0) rotate(0deg);
+		}
+		to {
+			transform: translate3d(-14px, -12px, 0) rotate(1.2deg);
+		}
+	}
+
+	.contour-field--section {
+		right: max(1rem, 4vw);
+		bottom: clamp(1rem, 4vh, 3rem);
+		-webkit-mask-image: radial-gradient(
+			ellipse at right bottom,
+			#000 0%,
+			transparent 78%
+		);
+		mask-image: radial-gradient(
+			ellipse at right bottom,
+			#000 0%,
+			transparent 78%
+		);
+	}
+
+	.contour-field--page {
+		top: clamp(2rem, 6vw, 5rem);
+		right: max(1rem, 5vw);
+		-webkit-mask-image: radial-gradient(
+			ellipse at right top,
+			#000 0%,
+			transparent 80%
+		);
+		mask-image: radial-gradient(
+			ellipse at right top,
+			#000 0%,
+			transparent 80%
+		);
+	}
+
+	.contour-field--footer {
+		left: max(1rem, 5vw);
+		bottom: 0;
+		-webkit-mask-image: linear-gradient(0deg, #000 0%, transparent 80%);
+		mask-image: linear-gradient(0deg, #000 0%, transparent 80%);
+	}
+
+	.contour-field__line {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.5;
+		vector-effect: non-scaling-stroke;
+	}
+
+	html.js[data-motion="on"][data-reveal="on"]
+		.contour-field--draw
+		.contour-field__line {
+		stroke-dasharray: 1;
+		stroke-dashoffset: 1;
+	}
+
+	html.js[data-motion="on"][data-reveal="on"]
+		.contour-field--draw.is-drawn
+		.contour-field__line {
+		stroke-dashoffset: 0;
+		transition: stroke-dashoffset 800ms var(--ease-snap) both;
+		transition-delay: calc(var(--i, 0) * 60ms);
+	}
+
+	@media (max-width: 767px) {
+		.contour-field {
+			display: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.contour-field__line {
+			stroke-dasharray: none !important;
+			stroke-dashoffset: 0 !important;
+			transition: none !important;
+		}
+	}
+</style>

@@ -1,0 +1,86 @@
+---
+import { withBase } from "../../utils/assets";
+import Barcode from "./Barcode.astro";
+import Icon from "./Icon.astro";
+
+interface Props {
+	index: string;
+	eyebrow: string;
+	title: string;
+	lead: string;
+	actionHref?: string;
+	actionLabel?: string;
+	level?: "h2" | "h3";
+	headingId?: string;
+}
+
+const {
+	index,
+	eyebrow,
+	title,
+	lead,
+	actionHref,
+	actionLabel,
+	level = "h2",
+	headingId,
+} = Astro.props;
+
+const Heading = level;
+---
+
+<header class="section-head">
+	<div class="section-head__main" data-reveal>
+		<div class="section-head__id">
+			<span class="section-index" aria-hidden="true">
+				{index}
+			</span>
+			<span class="eyebrow">{eyebrow}</span>
+		</div>
+		<Heading class="section-head__title display" id={headingId}>
+			{title}
+		</Heading>
+	</div>
+	<div class="section-head__side" data-reveal style="--reveal-delay: 90ms">
+		<Barcode
+			class="section-head__barcode"
+			seed={`${eyebrow}-${index}`}
+			label={`SEC.${index}`}
+			height={16}
+			count={28}
+		/>
+		<p class="section-head__lead lead">{lead}</p>
+		{actionHref && actionLabel && (
+			<a
+				class="section-head__action link-more"
+				href={withBase(actionHref)}
+			>
+				{actionLabel}
+				<Icon name="arrow-up-right" size="0.95em" />
+			</a>
+		)}
+	</div>
+</header>
+
+<style>
+	.section-head__side {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 0.8rem;
+	}
+
+	:global(.section-head__barcode) {
+		margin-bottom: 0.15rem;
+		opacity: 0.4;
+	}
+
+	@media (max-width: 900px) {
+		.section-head__side {
+			align-items: flex-start;
+		}
+
+		:global(.section-head__barcode) {
+			display: none;
+		}
+	}
+</style>

@@ -1,0 +1,112 @@
+---
+import { contactConfig, siteConfig } from "../../../config";
+import Icon from "../../atoms/Icon.astro";
+import PageLayout from "../../../layouts/PageLayout.astro";
+
+const page = siteConfig.page.contact;
+const channels = contactConfig.channels.filter((channel) => channel.enabled);
+const email = channels.find((channel) => channel.href.startsWith("mailto:"));
+const iconMap = { email: "mail", bilibili: "play", github: "code" } as const;
+---
+
+<PageLayout
+	title={page.title}
+	description={page.description}
+	eyebrow={contactConfig.eyebrow}
+	heroTitle={contactConfig.title}
+	lead={contactConfig.lead}
+	latin="CONTACT"
+	index={String(page.navOrder).padStart(2, "0")}
+	meta={["两个工作日内回复", "项目合作", "一般咨询"]}
+	hero={contactConfig.hero}
+	decor="rays"
+>
+	<section class="section">
+		<div class="container">
+			<div class="contact-layout">
+				<div class="contact-aside" data-reveal>
+					<span class="eyebrow">// DIRECT LINE</span>
+					<h2 class="display contact-aside__title">
+						来访与联系
+					</h2>
+					{email && (
+						<a class="contact-aside__mail" href={email.href}>
+							{email.value}
+						</a>
+					)}
+					<p class="contact-aside__note">{contactConfig.note}</p>
+					<div class="contact-aside__meta">
+						<span class="air-bar" aria-hidden="true"></span>
+						<span class="meta-field">
+							<span>{siteConfig.identity.location}</span>
+							<span>EST. {siteConfig.identity.foundingYear}</span>
+						</span>
+					</div>
+				</div>
+
+				<div
+					class="contact-list"
+					data-reveal
+					style="--reveal-delay: 120ms"
+				>
+					{channels.map((channel) => (
+						<a
+							class="contact-item"
+							href={channel.href}
+							target={
+								channel.href.startsWith("http")
+									? "_blank"
+									: undefined
+							}
+							rel={
+								channel.href.startsWith("http")
+									? "noopener noreferrer"
+									: undefined
+							}
+						>
+							<span class="contact-item__icon">
+								<Icon
+									name={
+										iconMap[
+											channel.id as keyof typeof iconMap
+										] ?? "external"
+									}
+									size="1.15rem"
+								/>
+							</span>
+							<span>
+								<span class="contact-item__label">
+									{channel.latin}
+								</span>
+								<span class="contact-item__value">
+									{channel.value}
+								</span>
+								<span class="contact-item__note">
+									{channel.note}
+								</span>
+							</span>
+							<span class="contact-item__arrow">
+								<Icon name="arrow-up-right" size="1rem" />
+							</span>
+						</a>
+					))}
+				</div>
+			</div>
+		</div>
+	</section>
+</PageLayout>
+
+<style>
+	.contact-aside__title {
+		margin-top: 1rem;
+		font-size: clamp(2rem, 4vw, 3.2rem);
+	}
+
+	.contact-aside__meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 1rem;
+		margin-top: 2rem;
+	}
+</style>

@@ -1,0 +1,132 @@
+---
+import { getEntry, render } from "astro:content";
+import { aboutConfig, contactConfig, siteConfig } from "../../../config";
+import { filterNavItems } from "../../../utils/pages";
+import ButtonLink from "../../atoms/ButtonLink.astro";
+import Image from "../../atoms/Image.astro";
+import PageLayout from "../../../layouts/PageLayout.astro";
+import "../../../styles/prose.css";
+
+const page = siteConfig.page.about;
+const entry = await getEntry("pages", aboutConfig.contentEntry);
+const rendered = entry ? await render(entry) : null;
+const Content = rendered?.Content;
+
+const contactEnabled = siteConfig.page.contact.enabled;
+const newsEnabled = siteConfig.page.news.enabled;
+const email = filterNavItems(
+	contactConfig.channels
+		.filter((channel) => channel.enabled)
+		.map((channel) => ({
+			label: channel.label,
+			latin: channel.latin,
+			href: channel.href,
+			enabled: channel.enabled,
+		})),
+).find((channel) => channel.href.startsWith("mailto:"));
+---
+
+<PageLayout
+	title={page.title}
+	description={page.description}
+	eyebrow={aboutConfig.eyebrow}
+	heroTitle={aboutConfig.title}
+	lead={aboutConfig.lead}
+	latin="ABOUT"
+	index={String(page.navOrder).padStart(2, "0")}
+	meta={aboutConfig.facts.map((fact) => `${fact.label} ${fact.value}`)}
+	hero={aboutConfig.hero}
+	decor="contour"
+>
+	<section class="section">
+		<div class="container">
+			<div class="about-layout">
+				<div class="about-content" data-reveal>
+					{Content && (
+						<div class="prose">
+							<Content />
+						</div>
+					)}
+				</div>
+
+				<aside
+					class="about-media"
+					data-reveal
+					style="--reveal-delay: 120ms"
+				>
+					<div class="image-frame">
+						<Image
+							src={aboutConfig.image}
+							alt={aboutConfig.imageAlt}
+							width={900}
+							height={1120}
+							sizes="(max-width: 900px) 100vw, 38vw"
+						/>
+					</div>
+					<div class="about-facts">
+						{aboutConfig.facts.map((fact) => (
+							<div class="fact">
+								<span class="fact__label">{fact.latin}</span>
+								<span class="fact__value">{fact.value}</span>
+							</div>
+						))}
+					</div>
+				</aside>
+			</div>
+
+			<div class="about-cta" data-reveal>
+				<span class="air-bar" aria-hidden="true"></span>
+				<p class="about-cta__text">了解更多校园动态？</p>
+				<div class="about-cta__actions">
+					{contactEnabled ? (
+						<ButtonLink href="/contact/">联系方式</ButtonLink>
+					) : (
+						email && (
+							<ButtonLink href={email.href}>联系方式</ButtonLink>
+						)
+					)}
+					{newsEnabled && (
+						<ButtonLink href="/news/" variant="ghost">
+							查看新闻
+						</ButtonLink>
+					)}
+				</div>
+			</div>
+		</div>
+	</section>
+</PageLayout>
+
+<style>
+	.about-content {
+		min-width: 0;
+	}
+
+	.about-cta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 1rem 1.5rem;
+		margin-top: clamp(3rem, 7vw, 5rem);
+		padding-top: 1.6rem;
+		border-top: 1px solid var(--line);
+	}
+
+	.about-cta__text {
+		color: var(--ink);
+		font-size: 1.1rem;
+		font-weight: 600;
+	}
+
+	.about-cta__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+		margin-left: auto;
+	}
+
+	@media (max-width: 700px) {
+		.about-cta__actions {
+			margin-left: 0;
+		}
+	}
+</style>

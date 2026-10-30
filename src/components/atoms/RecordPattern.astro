@@ -1,0 +1,223 @@
+---
+import { motionConfig } from "../../config";
+
+interface Props {
+	class?: string;
+	/** 文章主唱片允许 20s 极慢旋转；副唱片保持静态 */
+	animated?: boolean;
+}
+
+const { class: className = "", animated = false } = Astro.props;
+const animate =
+	animated && motionConfig.enabled && motionConfig.ambient.articleRecord;
+
+const center = 500;
+
+// 主盘纹路：同心圆 + 部分虚线槽纹
+const rings = [
+	{ r: 470, dashed: false },
+	{ r: 444, dashed: true },
+	{ r: 426, dashed: false },
+	{ r: 396, dashed: false },
+	{ r: 360, dashed: true },
+	{ r: 322, dashed: false },
+	{ r: 286, dashed: false },
+	{ r: 246, dashed: true },
+	{ r: 208, dashed: false },
+	{ r: 76, dashed: false },
+	{ r: 8, dashed: false },
+];
+
+// 外圈径向刻度：每 6° 一根，每第 5 根加长
+const ticks = Array.from({ length: 60 }, (_, index) => {
+	const angle = ((index * 6 - 90) * Math.PI) / 180;
+	const long = index % 5 === 0;
+	const inner = long ? 414 : 444;
+	const outer = 470;
+	return {
+		x1: center + Math.cos(angle) * inner,
+		y1: center + Math.sin(angle) * inner,
+		x2: center + Math.cos(angle) * outer,
+		y2: center + Math.sin(angle) * outer,
+	};
+});
+
+// 内圈短辐条
+const spokes = Array.from({ length: 12 }, (_, index) => {
+	const angle = ((index * 30 - 90) * Math.PI) / 180;
+	return {
+		x1: center + Math.cos(angle) * 120,
+		y1: center + Math.sin(angle) * 120,
+		x2: center + Math.cos(angle) * 186,
+		y2: center + Math.sin(angle) * 186,
+	};
+});
+
+// 右上角的小型星图扇形，作为 Voyager 图案母题；不添加文字或二进制
+const fanOrigin = { x: 824, y: 196 };
+const fan = Array.from({ length: 9 }, (_, index) => {
+	const angle = ((-62 + index * 15.5) * Math.PI) / 180;
+	const length = 28 + (index % 3) * 18;
+	return {
+		x2: fanOrigin.x + Math.cos(angle) * length,
+		y2: fanOrigin.y + Math.sin(angle) * length,
+	};
+});
+
+// 唯一强调色：12 点方向的一根刻度
+const accentAngle = -Math.PI / 2;
+const accent = {
+	x1: center + Math.cos(accentAngle) * 414,
+	y1: center + Math.sin(accentAngle) * 414,
+	x2: center + Math.cos(accentAngle) * 470,
+	y2: center + Math.sin(accentAngle) * 470,
+};
+---
+
+<div
+	class:list={[
+		"record-pattern",
+		className,
+		animate && "record-pattern--animated",
+	]}
+	aria-hidden="true"
+>
+	<svg
+		viewBox="0 0 1000 1000"
+		preserveAspectRatio="xMidYMid meet"
+		focusable="false"
+		shape-rendering="geometricPrecision"
+	>
+		<g class="record-pattern__rings">
+			{rings.map((ring) => (
+				<circle
+					class:list={[
+						"record-pattern__ring",
+						ring.dashed && "record-pattern__ring--dash",
+					]}
+					cx={center}
+					cy={center}
+					r={ring.r}
+				/>
+			))}
+		</g>
+
+		<g class="record-pattern__ticks">
+			{ticks.map((tick) => (
+				<line
+					class="record-pattern__tick"
+					x1={tick.x1}
+					y1={tick.y1}
+					x2={tick.x2}
+					y2={tick.y2}
+				/>
+			))}
+		</g>
+
+		<g class="record-pattern__spokes">
+			{spokes.map((spoke) => (
+				<line
+					class="record-pattern__spoke"
+					x1={spoke.x1}
+					y1={spoke.y1}
+					x2={spoke.x2}
+					y2={spoke.y2}
+				/>
+			))}
+		</g>
+
+		<g class="record-pattern__fan">
+			{fan.map((line) => (
+				<line
+					x1={fanOrigin.x}
+					y1={fanOrigin.y}
+					x2={line.x2}
+					y2={line.y2}
+				/>
+			))}
+			<circle cx={fanOrigin.x} cy={fanOrigin.y} r="2.5" />
+		</g>
+
+		<line
+			class="record-pattern__accent"
+			x1={accent.x1}
+			y1={accent.y1}
+			x2={accent.x2}
+			y2={accent.y2}
+		/>
+
+		<circle class="record-pattern__label" cx={center} cy={center} r="76" />
+		<circle class="record-pattern__spindle" cx={center} cy={center} r="8" />
+	</svg>
+</div>
+
+<style>
+	.record-pattern {
+		color: var(--ink);
+		pointer-events: none;
+		user-select: none;
+	}
+
+	.record-pattern svg {
+		display: block;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+	}
+
+	.record-pattern :global(circle),
+	.record-pattern :global(line) {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.record-pattern__ring {
+		opacity: 0.55;
+	}
+
+	.record-pattern__ring--dash {
+		stroke-dasharray: 1 9;
+		opacity: 0.3;
+	}
+
+	.record-pattern__tick {
+		opacity: 0.32;
+	}
+
+	.record-pattern__spoke {
+		opacity: 0.26;
+	}
+
+	.record-pattern__fan line,
+	.record-pattern__fan circle {
+		opacity: 0.38;
+	}
+
+	.record-pattern__accent {
+		stroke: var(--accent);
+		opacity: 0.85;
+	}
+
+	.record-pattern__label {
+		opacity: 0.45;
+	}
+
+	.record-pattern__spindle {
+		opacity: 0.7;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.record-pattern--animated svg {
+			animation: record-orbit 20s linear infinite;
+			transform-origin: 50% 50%;
+		}
+	}
+
+	@keyframes record-orbit {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+</style>

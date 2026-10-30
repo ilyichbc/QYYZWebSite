@@ -1,0 +1,75 @@
+---
+import { newsConfig, siteConfig } from "../../../config";
+import { formatDate, getNewsHref, getSortedNews } from "../../../utils/content";
+import Icon from "../../atoms/Icon.astro";
+import SectionHeading from "../../atoms/SectionHeading.astro";
+import SectionShell from "../../layout/SectionShell.astro";
+import type { HomeSectionConfig } from "../../../types/config";
+
+interface Props {
+	section: HomeSectionConfig;
+}
+
+const { section } = Astro.props;
+const newsEnabled = siteConfig.page.news.enabled;
+const entries = (await getSortedNews()).slice(0, newsConfig.homePreviewCount);
+const RowTag = newsEnabled ? "a" : "div";
+---
+
+<SectionShell section={section}>
+	<SectionHeading
+		index={section.index}
+		eyebrow={section.eyebrow}
+		title={section.title}
+		lead={section.lead}
+		headingId={`${section.id}-title`}
+		actionHref={newsEnabled ? "/news/" : undefined}
+		actionLabel={newsEnabled ? "全部消息" : undefined}
+	/>
+
+	{entries.length > 0 ? (
+		<div class="record-list" data-reveal style="--reveal-delay: 120ms">
+			{entries.map((entry) => (
+				<RowTag
+					class="record-row"
+					href={newsEnabled ? getNewsHref(entry) : undefined}
+				>
+					<span class="record-row__date">
+						{formatDate(entry.data.published)}
+					</span>
+					<span class="record-row__meta">{entry.data.category}</span>
+					<span class="record-row__body">
+						<span class="record-row__title">
+							{entry.data.title}
+							{entry.data.pinned && <span class="tag">置顶</span>}
+						</span>
+						<span class="record-row__desc">
+							{entry.data.description}
+						</span>
+					</span>
+					<span class="record-row__arrow">
+						<Icon name="arrow-up-right" size="1rem" />
+					</span>
+				</RowTag>
+			))}
+		</div>
+	) : (
+		<p class="news-empty">{newsConfig.emptyText}</p>
+	)}
+</SectionShell>
+
+<style>
+	.record-row__title :global(.tag) {
+		margin-left: 0.5rem;
+		vertical-align: 0.12em;
+		font-size: 0.58rem;
+	}
+
+	.news-empty {
+		padding: 2.5rem 1.5rem;
+		border: 1px solid var(--line-strong);
+		border-radius: 0;
+		color: var(--muted);
+		text-align: center;
+	}
+</style>

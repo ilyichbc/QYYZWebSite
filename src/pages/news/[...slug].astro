@@ -1,0 +1,241 @@
+---
+import { render } from "astro:content";
+import Barcode from "../../components/atoms/Barcode.astro";
+import Image from "../../components/atoms/Image.astro";
+import SpaceLines from "../../components/atoms/SpaceLines.astro";
+import RecordPattern from "../../components/atoms/RecordPattern.astro";
+import TrajectoryLines from "../../components/atoms/TrajectoryLines.astro";
+import HalftoneField from "../../components/atoms/HalftoneField.astro";
+import ParticleField from "../../components/atoms/ParticleField.astro";
+import Icon from "../../components/atoms/Icon.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { newsConfig, siteConfig } from "../../config";
+import { withBase } from "../../utils/assets";
+import {
+	formatDate,
+	getNewsHref,
+	getSortedNews,
+	type NewsEntry,
+} from "../../utils/content";
+import "../../styles/page.css";
+import "../../styles/prose.css";
+
+export async function getStaticPaths() {
+	if (!siteConfig.page.news.enabled) {
+		return [];
+	}
+
+	const entries = await getSortedNews();
+
+	return entries.map((entry) => ({
+		params: { slug: entry.id },
+		props: { entry },
+	}));
+}
+
+interface Props {
+	entry: NewsEntry;
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const allEntries = await getSortedNews();
+const index = allEntries.findIndex((item) => item.id === entry.id);
+const newer = index > 0 ? allEntries[index - 1] : null;
+const older =
+	index >= 0 && index < allEntries.length - 1 ? allEntries[index + 1] : null;
+const page = siteConfig.page.news;
+
+const published = entry.data.published;
+const updated = entry.data.updated;
+const heroImage = entry.data.cover || newsConfig.detailImage;
+const heroAlt =
+	entry.data.coverAlt || newsConfig.detailImageAlt || entry.data.title;
+const heroOverlay = newsConfig.detailOverlay;
+---
+
+<BaseLayout
+	title={entry.data.title}
+	description={entry.data.description}
+	image={entry.data.cover}
+	pageType="article"
+	article={{
+		published,
+		updated,
+		author: entry.data.author,
+	}}
+>
+	<header
+		class:list={[
+			"article-hero",
+			`article-hero--overlay-${heroOverlay}`,
+			heroOverlay === "dark" && "on-media",
+			heroOverlay === "light" && "on-light",
+		]}
+		data-hero
+		data-hero-tone={heroOverlay}
+	>
+		{heroImage && (
+			<Image
+				src={heroImage}
+				alt={heroAlt}
+				class="article-hero__bg"
+				priority
+				style="object-position: center 45%"
+			/>
+		)}
+		<div
+			class:list={[
+				"article-hero__overlay",
+				`article-hero__overlay--${heroOverlay}`,
+			]}
+			aria-hidden="true"
+		/>
+		<SpaceLines variant="page" quiet />
+		<ParticleField count={16} />
+		<div class="article-hero__frame" aria-hidden="true">
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+		</div>
+		<div class="container article-hero__inner">
+			<div class="article-hero__meta" data-reveal>
+				<span class="tag">{entry.data.category}</span>
+				<dl class="article-hero__fields">
+					<div class="article-hero__field">
+						<dt>PUBLISHED</dt>
+						<dd>
+							<time datetime={published.toISOString()}>
+								{formatDate(published)}
+							</time>
+						</dd>
+					</div>
+					{updated && (
+						<div class="article-hero__field">
+							<dt>UPDATED</dt>
+							<dd>
+								<time datetime={updated.toISOString()}>
+									{formatDate(updated)}
+								</time>
+							</dd>
+						</div>
+					)}
+					<div class="article-hero__field">
+						<dt>AUTHOR</dt>
+						<dd>{entry.data.author}</dd>
+					</div>
+				</dl>
+			</div>
+			<h1
+				class="article-hero__title display"
+				data-reveal
+				style="--reveal-delay: 70ms"
+			>
+				{entry.data.title}
+			</h1>
+			{entry.data.description && (
+				<p
+					class="article-hero__desc lead"
+					data-reveal
+					style="--reveal-delay: 140ms"
+				>
+					{entry.data.description}
+				</p>
+			)}
+		</div>
+	</header>
+
+	<section class="article-body">
+		<HalftoneField position="full" opacity={0.05} />
+		<RecordPattern class="article-body__record" animated />
+		<div class="article-ruler" aria-hidden="true">
+			<span class="article-ruler__line"></span>
+			<span class="article-ruler__ticks"></span>
+		</div>
+		<RecordPattern class="article-body__record article-body__record--lower" />
+		<TrajectoryLines variant="article" quiet />
+		<div class="container">
+			<div class="article-layout">
+				<article class="prose">
+					<Content />
+					<div class="article-end" aria-hidden="true">
+						<span class="article-end__rule"></span>
+						<span class="article-end__accent"></span>
+					</div>
+				</article>
+
+				<aside class="article-aside" data-reveal>
+					<div class="article-aside__block">
+						<span class="article-aside__label">PUBLISHED</span>
+						<span class="article-aside__value">
+							{formatDate(published)}
+						</span>
+					</div>
+					{updated && (
+						<div class="article-aside__block">
+							<span class="article-aside__label">UPDATED</span>
+							<span class="article-aside__value">
+								{formatDate(updated)}
+							</span>
+						</div>
+					)}
+					<div class="article-aside__block">
+						<span class="article-aside__label">RECORD</span>
+						<Barcode
+							class="article-aside__barcode"
+							seed={entry.id}
+							label={formatDate(published)}
+							height={18}
+							count={28}
+						/>
+					</div>
+					<div class="article-aside__block">
+						<span class="article-aside__label">CATEGORY</span>
+						<span class="article-aside__value">
+							{entry.data.category}
+						</span>
+					</div>
+					{entry.data.tags.length > 0 && (
+						<div class="article-aside__block">
+							<span class="article-aside__label">TAGS</span>
+							<div class="article-aside__tags">
+								{entry.data.tags.map((tag) => (
+									<span class="tag">{tag}</span>
+								))}
+							</div>
+						</div>
+					)}
+					<a class="link-more" href={withBase(page.href)}>
+						返回消息
+						<Icon name="arrow-up-right" size="0.95em" />
+					</a>
+				</aside>
+			</div>
+
+			{(newer || older) && (
+				<nav class="article-nav" aria-label="上一篇与下一篇">
+					{newer && (
+						<a class="article-nav__link" href={getNewsHref(newer)}>
+							<span class="article-nav__label">← 较新一篇</span>
+							<span class="article-nav__title">
+								{newer.data.title}
+							</span>
+						</a>
+					)}
+					{older && (
+						<a
+							class="article-nav__link article-nav__link--next"
+							href={getNewsHref(older)}
+						>
+							<span class="article-nav__label">较早一篇 →</span>
+							<span class="article-nav__title">
+								{older.data.title}
+							</span>
+						</a>
+					)}
+				</nav>
+			)}
+		</div>
+	</section>
+</BaseLayout>

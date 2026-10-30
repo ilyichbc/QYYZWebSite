@@ -1,0 +1,120 @@
+---
+import { motionConfig } from "../../config";
+import type { DecorDensity } from "../../types/config";
+
+interface Props {
+	class?: string;
+	position?: "top-right" | "bottom-left" | "bottom-right" | "full";
+	density?: DecorDensity;
+	opacity?: number;
+}
+
+const {
+	class: className = "",
+	position = "bottom-left",
+	density = motionConfig.decor.density,
+	opacity,
+} = Astro.props;
+
+const enabled = motionConfig.enabled && motionConfig.decor.halftone;
+const drift = motionConfig.ambient.sectionDrift;
+const gap = density === "high" ? 5 : density === "low" ? 10 : 7;
+const baseOpacity =
+	opacity ?? (density === "high" ? 0.42 : density === "low" ? 0.24 : 0.32);
+---
+
+{enabled && (
+	<div
+		class:list={[
+			"halftone-field",
+			`halftone-field--${position}`,
+			className,
+		]}
+		style={`--halftone-gap: ${gap}px; --halftone-opacity: ${baseOpacity}`}
+		aria-hidden="true"
+		data-field-drift={drift ? "" : undefined}
+	/>
+)}
+
+<style>
+	.halftone-field {
+		position: absolute;
+		z-index: 1;
+		width: clamp(18rem, 44vw, 38rem);
+		height: clamp(12rem, 30vw, 24rem);
+		color: currentColor;
+		background-image: radial-gradient(
+			circle,
+			currentColor 1.2px,
+			transparent 1.5px
+		);
+		background-size: var(--halftone-gap, 9px) var(--halftone-gap, 9px);
+		opacity: var(--halftone-opacity, 0.21);
+		pointer-events: none;
+		-webkit-mask-image: radial-gradient(
+			ellipse at var(--halftone-origin, left bottom),
+			#000 0%,
+			transparent 74%
+		);
+		mask-image: radial-gradient(
+			ellipse at var(--halftone-origin, left bottom),
+			#000 0%,
+			transparent 74%
+		);
+	}
+
+	.halftone-field--top-right {
+		top: clamp(2rem, 5vw, 4rem);
+		right: max(1.25rem, 6vw);
+		--halftone-origin: right top;
+	}
+
+	.halftone-field--bottom-left {
+		bottom: clamp(2.5rem, 8vh, 5rem);
+		left: max(1.25rem, 6vw);
+		--halftone-origin: left bottom;
+	}
+
+	.halftone-field--bottom-right {
+		right: max(1.25rem, 6vw);
+		bottom: clamp(2.5rem, 8vh, 5rem);
+		--halftone-origin: right bottom;
+	}
+
+	.halftone-field--full {
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		-webkit-mask-image: linear-gradient(135deg, #000 0%, transparent 70%);
+		mask-image: linear-gradient(135deg, #000 0%, transparent 70%);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.halftone-field.is-drift {
+			animation: halftone-breathe 10s ease-in-out infinite alternate;
+		}
+	}
+
+	@keyframes halftone-breathe {
+		from {
+			opacity: calc(var(--halftone-opacity, 0.21) * 0.6);
+			transform: translate3d(0, 0, 0) scale(0.98);
+		}
+		to {
+			opacity: var(--halftone-opacity, 0.21);
+			transform: translate3d(-10px, -12px, 0) scale(1.03);
+		}
+	}
+
+	@media (max-width: 767px) {
+		.halftone-field {
+			display: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.halftone-field {
+			animation: none !important;
+		}
+	}
+</style>

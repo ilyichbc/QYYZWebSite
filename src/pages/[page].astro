@@ -1,0 +1,32 @@
+---
+import AboutPage from "../components/features/pages/AboutPage.astro";
+import ContactPage from "../components/features/pages/ContactPage.astro";
+import NewsPage from "../components/features/pages/NewsPage.astro";
+import ProductsPage from "../components/features/pages/ProductsPage.astro";
+import { getGeneratableFeaturePages } from "../utils/pages";
+import type { FeatureKey } from "../types/config";
+
+export function getStaticPaths() {
+	return getGeneratableFeaturePages().map(({ key }) => ({
+		params: { page: key },
+		props: { key },
+	}));
+}
+
+interface Props {
+	key: Exclude<FeatureKey, "home">;
+}
+
+const { key } = Astro.props;
+
+const components = {
+	about: AboutPage,
+	contact: ContactPage,
+	news: NewsPage,
+	products: ProductsPage,
+} as const;
+
+const Component = components[key];
+---
+
+<Component />

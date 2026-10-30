@@ -1,0 +1,80 @@
+---
+import { contactConfig, siteConfig } from "../../../config";
+import ButtonLink from "../../atoms/ButtonLink.astro";
+import Icon from "../../atoms/Icon.astro";
+import SectionHeading from "../../atoms/SectionHeading.astro";
+import SectionShell from "../../layout/SectionShell.astro";
+import type { HomeSectionConfig } from "../../../types/config";
+
+interface Props {
+	section: HomeSectionConfig;
+}
+
+const { section } = Astro.props;
+const channels = contactConfig.channels.filter((channel) => channel.enabled);
+const contactPageEnabled = siteConfig.page.contact.enabled;
+const email = channels.find((channel) => channel.href.startsWith("mailto:"));
+const primaryHref = contactPageEnabled
+	? "/contact/"
+	: (email?.href ?? "/contact/");
+---
+
+<SectionShell section={section}>
+	<SectionHeading
+		index={section.index}
+		eyebrow={section.eyebrow}
+		title={section.title}
+		lead={section.lead}
+		headingId={`${section.id}-title`}
+	/>
+
+	<div class="contact-section">
+		<div class="contact-intro" data-reveal style="--reveal-delay: 120ms">
+			<span class="eyebrow">// GET IN TOUCH</span>
+			<h3 class="contact-title">欢迎来访，共话教育。</h3>
+			<p class="contact-lead">{contactConfig.note}</p>
+			{email && (
+				<a class="contact-email" href={email.href}>
+					{email.value}
+				</a>
+			)}
+			<div class="contact-actions">
+				<ButtonLink href={primaryHref} variant="solid">
+					联系方式
+				</ButtonLink>
+			</div>
+		</div>
+
+		<div class="contact-channels" data-reveal style="--reveal-delay: 200ms">
+			{channels.map((channel) => (
+				<a
+					class="contact-channel"
+					href={channel.href}
+					target={
+						channel.href.startsWith("http") ? "_blank" : undefined
+					}
+					rel={
+						channel.href.startsWith("http")
+							? "noopener noreferrer"
+							: undefined
+					}
+				>
+					<span>
+						<span class="contact-channel__label">
+							{channel.latin} / {channel.label}
+						</span>
+						<span class="contact-channel__value">
+							{channel.value}
+						</span>
+						<span class="contact-channel__note">
+							{channel.note}
+						</span>
+					</span>
+					<span class="contact-channel__arrow">
+						<Icon name="arrow-up-right" size="1rem" />
+					</span>
+				</a>
+			))}
+		</div>
+	</div>
+</SectionShell>

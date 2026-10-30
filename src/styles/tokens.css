@@ -1,0 +1,56 @@
+/* ------------------------------------------------------------------
+   结构 / 动效 token
+   颜色与字体由 src/utils/theme.ts 在构建时注入，见 src/config.ts
+   设计语言：大图铺底、细线分割、锐利排版、唯一强调色
+   ------------------------------------------------------------------ */
+
+:root {
+  --header-h: 64px;
+  --gutter: clamp(1.25rem, 3.6vw, 4rem);
+  --maxw: 1600px;
+  --reading: 42rem;
+
+  --radius: 0px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+
+  --shadow-soft: 0 30px 80px -50px rgba(0, 0, 0, 0.6);
+
+  --ease-snap: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-mech: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-sway: cubic-bezier(0.45, 0, 0.25, 1);
+
+  --dur-fast: 160ms;
+  --dur-base: 240ms;
+  --dur-slow: 600ms;
+  --dur-reveal: 900ms;
+
+  --tracking-label: 0.14em;
+  --tracking-wide: 0.22em;
+
+  --z-header: 100;
+  --z-drawer: 120;
+  --z-skip: 200;
+
+  --footer-bg: #07121a;
+
+  /* 大图上的文字与线条 */
+  --media-ink: #f7fbfd;
+  --media-ink-soft: rgba(247, 251, 253, 0.8);
+  --media-muted: rgba(247, 251, 253, 0.58);
+  --media-line: rgba(247, 251, 253, 0.22);
+  --media-line-strong: rgba(247, 251, 253, 0.58);
+  --media-panel: rgba(5, 15, 22, 0.38);
+  --media-accent: #7fd2ff;
+}
+
+html {
+  scrollbar-gutter: stable;
+}
+
+html[data-motion="off"] {
+  --dur-fast: 0ms;
+  --dur-base: 0ms;
+  --dur-slow: 0ms;
+  --dur-reveal: 0ms;
+}

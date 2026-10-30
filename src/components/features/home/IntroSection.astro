@@ -1,0 +1,49 @@
+---
+import { homeConfig } from "../../../config";
+import SectionHeading from "../../atoms/SectionHeading.astro";
+import SectionShell from "../../layout/SectionShell.astro";
+import type { HomeSectionConfig } from "../../../types/config";
+
+interface Props {
+	section: HomeSectionConfig;
+}
+
+const { section } = Astro.props;
+const { intro } = homeConfig;
+---
+
+<SectionShell section={section}>
+	<SectionHeading
+		index={section.index}
+		eyebrow={section.eyebrow}
+		title={section.title}
+		lead={section.lead}
+		headingId={`${section.id}-title`}
+	/>
+
+	<div class="intro-layout">
+		<div class="intro-copy" data-reveal style="--reveal-delay: 120ms">
+			{intro.paragraphs.map((paragraph) => (
+				<p>{paragraph}</p>
+			))}
+			<p class="intro-signature">{intro.signature}</p>
+		</div>
+
+		<div class="intro-data" data-reveal style="--reveal-delay: 200ms">
+			{intro.stats.map((stat) => (
+				<div class="intro-stat">
+					<span
+						class="intro-stat__value"
+						data-count={
+							/^\d+$/.test(stat.value) ? stat.value : undefined
+						}
+					>
+						{stat.value}
+					</span>
+					<span class="intro-stat__label">{stat.label}</span>
+					<span class="intro-stat__latin">{stat.latin}</span>
+				</div>
+			))}
+		</div>
+	</div>
+</SectionShell>

@@ -1,0 +1,54 @@
+---
+import { imageConfig } from "../../config";
+import { resolveAsset } from "../../utils/assets";
+
+interface Props {
+	src: string;
+	alt: string;
+	width?: number;
+	height?: number;
+	class?: string;
+	imgClass?: string;
+	loading?: "lazy" | "eager";
+	priority?: boolean;
+	sizes?: string;
+	style?: string;
+}
+
+const {
+	src,
+	alt,
+	width,
+	height,
+	class: className = "",
+	imgClass = "",
+	loading,
+	priority = false,
+	sizes,
+	style,
+} = Astro.props;
+
+const resolved = resolveAsset(src);
+const loadingMode =
+	loading ??
+	(priority && imageConfig.eagerHero
+		? "eager"
+		: imageConfig.lazy
+			? "lazy"
+			: "eager");
+---
+
+{resolved && (
+	<img
+		src={resolved}
+		alt={alt}
+		width={width}
+		height={height}
+		loading={loadingMode}
+		decoding={imageConfig.decoding}
+		fetchpriority={priority ? "high" : undefined}
+		sizes={sizes}
+		class:list={[imgClass, className]}
+		style={style}
+	/>
+)}

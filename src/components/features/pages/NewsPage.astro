@@ -1,0 +1,606 @@
+---
+import { newsConfig, siteConfig } from "../../../config";
+import {
+	formatDate,
+	getNewsCategories,
+	getNewsHref,
+	getSortedNews,
+} from "../../../utils/content";
+import Icon from "../../atoms/Icon.astro";
+import PageLayout from "../../../layouts/PageLayout.astro";
+
+const page = siteConfig.page.news;
+const allEntries = await getSortedNews();
+const categories = getNewsCategories(allEntries);
+const categoryCounts = new Map<string, number>();
+
+for (const entry of allEntries) {
+	const category = entry.data.category;
+	if (category) {
+		categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
+	}
+}
+
+const showFilters = newsConfig.showCategories && categories.length > 1;
+const pageSize = Math.max(1, newsConfig.pageSize);
+---
+
+<PageLayout
+	title={page.title}
+	description={page.description}
+	eyebrow={newsConfig.eyebrow}
+	heroTitle={newsConfig.title}
+	lead={newsConfig.lead}
+	latin="NEWS"
+	index={String(page.navOrder).padStart(2, "0")}
+	meta={[`${allEntries.length} 篇记录`, "按时间倒序"]}
+	hero={newsConfig.hero}
+>
+	<section class="section">
+		<div class="container" data-news-page-size={pageSize}>
+			<div class="news-toolbar" data-reveal>
+				<div class="news-toolbar__top">
+					<div class="news-search" role="search" aria-label="搜索新闻">
+						<Icon name="search" size="1rem" />
+						<input
+							class="news-search__input"
+							type="search"
+							placeholder="搜索标题或内容…"
+							data-news-search
+							aria-label="搜索新闻"
+						/>
+					</div>
+					<p class="news-count" data-news-visible aria-live="polite">
+						{allEntries.length} RECORDS
+					</p>
+				</div>
+
+				{showFilters && (
+					<div
+						class="filter-bar"
+						role="group"
+						aria-label="按分类筛选"
+					>
+						<button
+							class="filter-chip is-active"
+							type="button"
+							data-news-filter="all"
+							aria-pressed="true"
+						>
+							全部
+							<span class="filter-chip__count">
+								{allEntries.length}
+							</span>
+						</button>
+						{categories.map((category) => (
+							<button
+								class="filter-chip"
+								type="button"
+								data-news-filter={category}
+								aria-pressed="false"
+							>
+								{category}
+								<span class="filter-chip__count">
+									{categoryCounts.get(category) ?? 0}
+								</span>
+							</button>
+						))}
+					</div>
+				)}
+			</div>
+
+			{allEntries.length > 0 ? (
+				<div class="record-list" data-news-list>
+					{allEntries.map((entry, index) => (
+						<a
+							class="record-row"
+							href={getNewsHref(entry)}
+							data-news-item
+							data-category={entry.data.category}
+							data-searchable={`${entry.data.title} ${entry.data.description} ${entry.data.tags.join(" ")}`.toLowerCase()}
+							data-astro-prefetch="hover"
+							data-reveal
+							style={`--reveal-delay: ${(index % pageSize) * 55}ms`}
+						>
+							<span class="record-row__date">
+								{formatDate(entry.data.published)}
+							</span>
+							<span class="record-row__meta">
+								{entry.data.category}
+							</span>
+							<span class="record-row__body">
+								<span class="record-row__title">
+									{entry.data.title}
+									{entry.data.pinned && (
+										<span class="tag">置顶</span>
+									)}
+								</span>
+								<span class="record-row__desc">
+									{entry.data.description}
+								</span>
+							</span>
+							<span class="record-row__arrow">
+								<Icon name="arrow-up-right" size="1rem" />
+							</span>
+						</a>
+					))}
+				</div>
+			) : (
+				<p class="news-empty">{newsConfig.emptyText}</p>
+			)}
+
+			<p class="news-empty" data-news-empty hidden>
+				没有匹配的消息。
+			</p>
+
+			<nav
+				class="news-pagination"
+				data-news-pagination
+				aria-label="新闻分页"
+				hidden
+			>
+				<button
+					class="news-pagination__btn"
+					type="button"
+					data-news-prev
+					aria-label="上一页"
+				>
+					<Icon name="arrow-up" size="0.95rem" />
+					上一页
+				</button>
+				<div class="news-pagination__pages" data-news-pages></div>
+				<div class="news-pagination__jump">
+					<label class="news-pagination__jump-label">
+						跳至
+						<input
+							class="news-pagination__jump-input"
+							type="number"
+							inputmode="numeric"
+							min="1"
+							step="1"
+							data-news-jump
+							aria-label="跳转到指定页码"
+						/>
+						页
+					</label>
+					<span class="news-pagination__jump-total" data-news-jump-total>
+					</span>
+				</div>
+				<button
+					class="news-pagination__btn"
+					type="button"
+					data-news-next
+					aria-label="下一页"
+				>
+					下一页
+					<Icon name="arrow-down" size="0.95rem" />
+				</button>
+			</nav>
+		</div>
+	</section>
+</PageLayout>
+
+<style>
+	.record-row__title :global(.tag) {
+		margin-left: 0.5rem;
+		vertical-align: 0.12em;
+		font-size: 0.58rem;
+	}
+
+	.news-toolbar {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1rem;
+	}
+
+	.news-toolbar__top {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.news-search {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		width: min(24rem, 100%);
+		padding: 0.55rem 0.8rem;
+		border: 1px solid var(--line-strong);
+		background: var(--panel);
+		color: var(--muted);
+	}
+
+	.news-search:focus-within {
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+
+	.news-search__input {
+		flex: 1;
+		min-width: 0;
+		border: 0;
+		outline: none;
+		background: transparent;
+		color: var(--ink);
+		font-size: 0.88rem;
+	}
+
+	.news-search__input::placeholder {
+		color: var(--muted);
+	}
+
+	.news-pagination {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.6rem;
+		margin-top: 2rem;
+	}
+
+	/* 作者样式里的 display 会盖过 hidden 属性的 UA 样式，需显式兜底 */
+	.news-pagination[hidden] {
+		display: none;
+	}
+
+	.news-pagination__btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.5rem 0.9rem;
+		border: 1px solid var(--line-strong);
+		background: var(--panel);
+		color: var(--ink);
+		font-size: 0.82rem;
+		cursor: pointer;
+		transition:
+			border-color var(--dur-fast) var(--ease-mech),
+			background var(--dur-fast) var(--ease-mech);
+	}
+
+	.news-pagination__btn:hover:not(:disabled) {
+		border-color: var(--accent);
+		background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+	}
+
+	.news-pagination__btn:disabled {
+		opacity: 0.35;
+		cursor: not-allowed;
+	}
+
+	.news-pagination__pages {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.3rem;
+	}
+
+	.news-pagination__page {
+		display: grid;
+		place-items: center;
+		min-width: 2.1rem;
+		height: 2.1rem;
+		padding: 0 0.3rem;
+		border: 1px solid var(--line);
+		background: transparent;
+		color: var(--muted);
+		font-family: var(--font-latin);
+		font-size: 0.72rem;
+		font-variant-numeric: tabular-nums;
+		letter-spacing: 0.04em;
+		cursor: pointer;
+		transition:
+			border-color var(--dur-fast) var(--ease-mech),
+			background var(--dur-fast) var(--ease-mech),
+			color var(--dur-fast) var(--ease-mech);
+	}
+
+	.news-pagination__page:hover {
+		border-color: var(--line-strong);
+		color: var(--ink);
+	}
+
+	.news-pagination__page.is-active {
+		border-color: var(--accent);
+		background: var(--accent);
+		color: var(--accent-ink);
+		cursor: default;
+	}
+
+	.news-pagination__ellipsis {
+		color: var(--muted);
+		font-family: var(--font-latin);
+		font-size: 0.72rem;
+		padding: 0 0.2rem;
+	}
+
+	.news-pagination__jump {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+		margin-left: 0.4rem;
+		color: var(--muted);
+		font-size: 0.74rem;
+	}
+
+	.news-pagination__jump-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+
+	.news-pagination__jump-input {
+		width: 3.1rem;
+		padding: 0.32rem 0.35rem;
+		border: 1px solid var(--line);
+		background: transparent;
+		color: var(--ink);
+		font-family: var(--font-latin);
+		font-size: 0.74rem;
+		font-variant-numeric: tabular-nums;
+		text-align: center;
+		outline: none;
+		appearance: textfield;
+		-moz-appearance: textfield;
+		transition: border-color var(--dur-fast) var(--ease-mech);
+	}
+
+	.news-pagination__jump-input::-webkit-outer-spin-button,
+	.news-pagination__jump-input::-webkit-inner-spin-button {
+		margin: 0;
+		appearance: none;
+	}
+
+	.news-pagination__jump-input:focus {
+		border-color: var(--accent);
+	}
+
+	.news-pagination__jump-total {
+		font-family: var(--font-latin);
+		font-size: 0.68rem;
+		letter-spacing: 0.08em;
+		font-variant-numeric: tabular-nums;
+	}
+
+	@media (max-width: 560px) {
+		.news-toolbar__top {
+			gap: 0.6rem;
+		}
+
+		.news-search {
+			flex: 1 1 auto;
+			width: auto;
+			min-width: 0;
+		}
+
+		.news-count {
+			flex: none;
+			font-size: 0.6rem;
+		}
+	}
+</style>
+
+<script>
+	const searchInput = document.querySelector<HTMLInputElement>(
+		"[data-news-search]",
+	);
+	const filterButtons = Array.from(
+		document.querySelectorAll<HTMLButtonElement>("[data-news-filter]"),
+	);
+	const newsItems = Array.from(
+		document.querySelectorAll<HTMLElement>("[data-news-item]"),
+	);
+	const emptyState = document.querySelector<HTMLElement>("[data-news-empty]");
+	const visibleCount = document.querySelector<HTMLElement>(
+		"[data-news-visible]",
+	);
+	const pagination = document.querySelector<HTMLElement>(
+		"[data-news-pagination]",
+	);
+	const prevBtn = document.querySelector<HTMLButtonElement>("[data-news-prev]");
+	const nextBtn = document.querySelector<HTMLButtonElement>("[data-news-next]");
+	const pagesEl = document.querySelector<HTMLElement>("[data-news-pages]");
+	const jumpInput = document.querySelector<HTMLInputElement>("[data-news-jump]");
+	const jumpTotal = document.querySelector<HTMLElement>("[data-news-jump-total]");
+
+	const pageSize = Number(
+		document.querySelector("[data-news-page-size]")?.getAttribute(
+			"data-news-page-size",
+		) ?? "10",
+	) || 10;
+	let activeFilter = "all";
+	let query = "";
+	let currentPage = 0;
+
+	// 计算过滤 + 搜索后的可见项
+	function getMatchedItems(): HTMLElement[] {
+		const normalized = query.trim().toLowerCase();
+		return newsItems.filter((item) => {
+			const byCategory =
+				activeFilter === "all" || item.dataset.category === activeFilter;
+			if (!byCategory) {
+				return false;
+			}
+			if (!normalized) {
+				return true;
+			}
+			const haystack = item.dataset.searchable ?? item.textContent ?? "";
+			return haystack.toLowerCase().includes(normalized);
+		});
+	}
+
+	// 生成带省略号的页码序列，例如 [1, '…', 4, 5, 6, '…', 51]
+	// current 为 1 起的页码；靠近首尾时多铺几页，避免只剩「1 2 … 51」
+	function buildPageSequence(total: number, current: number): (number | "…")[] {
+		if (total <= 7) {
+			return Array.from({ length: total }, (_, index) => index + 1);
+		}
+
+		const pages = new Set<number>();
+		pages.add(1);
+		pages.add(total);
+
+		if (current <= 4) {
+			for (let p = 1; p <= 5; p += 1) pages.add(p);
+		} else if (current >= total - 3) {
+			for (let p = total - 4; p <= total; p += 1) pages.add(p);
+		} else {
+			for (let p = current - 1; p <= current + 1; p += 1) pages.add(p);
+		}
+
+		const result: (number | "…")[] = [];
+		let last = 0;
+		for (const p of Array.from(pages)
+			.filter((p) => p >= 1 && p <= total)
+			.sort((a, b) => a - b)) {
+			if (last && p - last > 1) {
+				result.push("…");
+			}
+			result.push(p);
+			last = p;
+		}
+		return result;
+	}
+
+	function render() {
+		const matched = getMatchedItems();
+		const totalPages = Math.max(1, Math.ceil(matched.length / pageSize));
+		currentPage = Math.min(currentPage, totalPages - 1);
+
+		newsItems.forEach((item) => {
+			item.hidden = true;
+		});
+
+		const start = currentPage * pageSize;
+		const end = start + pageSize;
+		matched.slice(start, end).forEach((item) => {
+			item.hidden = false;
+		});
+
+		if (emptyState) {
+			emptyState.hidden = matched.length !== 0;
+		}
+		if (visibleCount) {
+			visibleCount.textContent = `${matched.length} RECORDS`;
+		}
+		if (pagination) {
+			const shouldShow = matched.length > pageSize;
+			pagination.hidden = !shouldShow;
+			if (shouldShow) {
+				if (prevBtn) prevBtn.disabled = currentPage === 0;
+				if (nextBtn) nextBtn.disabled = currentPage >= totalPages - 1;
+				if (jumpInput) {
+					jumpInput.max = String(totalPages);
+					jumpInput.value = String(currentPage + 1);
+				}
+				if (jumpTotal) {
+					jumpTotal.textContent = `/ ${totalPages}`;
+				}
+				if (pagesEl) {
+					pagesEl.textContent = "";
+					for (const item of buildPageSequence(
+						totalPages,
+						currentPage + 1,
+					)) {
+						if (item === "…") {
+							const span = document.createElement("span");
+							span.className = "news-pagination__ellipsis";
+							span.textContent = "…";
+							pagesEl.appendChild(span);
+						} else {
+							const btn = document.createElement("button");
+							btn.type = "button";
+							btn.className = "news-pagination__page";
+							btn.textContent = String(item);
+							btn.setAttribute("aria-label", `第 ${item} 页`);
+							if (item === currentPage + 1) {
+								btn.classList.add("is-active");
+								btn.setAttribute("aria-current", "page");
+							}
+							btn.addEventListener("click", () => {
+								if (item - 1 !== currentPage) {
+									currentPage = item - 1;
+									render();
+								}
+							});
+							pagesEl.appendChild(btn);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if (filterButtons.length > 0) {
+		filterButtons.forEach((button) => {
+			button.addEventListener("click", () => {
+				const filter = button.dataset.newsFilter ?? "all";
+
+				filterButtons.forEach((item) => {
+					const active = item === button;
+					item.classList.toggle("is-active", active);
+					item.setAttribute("aria-pressed", String(active));
+				});
+
+				activeFilter = filter;
+				currentPage = 0;
+				render();
+			});
+		});
+	}
+
+	if (searchInput) {
+		searchInput.addEventListener("input", () => {
+			query = searchInput.value;
+			currentPage = 0;
+			render();
+		});
+	}
+
+	if (prevBtn) {
+		prevBtn.addEventListener("click", () => {
+			if (currentPage > 0) {
+				currentPage -= 1;
+				render();
+			}
+		});
+	}
+
+	if (nextBtn) {
+		nextBtn.addEventListener("click", () => {
+			const matched = getMatchedItems();
+			const totalPages = Math.max(1, Math.ceil(matched.length / pageSize));
+			if (currentPage < totalPages - 1) {
+				currentPage += 1;
+				render();
+			}
+		});
+	}
+
+	if (jumpInput) {
+		const jump = () => {
+			const matched = getMatchedItems();
+			const totalPages = Math.max(1, Math.ceil(matched.length / pageSize));
+			const requested = Math.round(Number(jumpInput.value));
+			if (!Number.isFinite(requested) || requested < 1) {
+				jumpInput.value = String(currentPage + 1);
+				return;
+			}
+			const target = Math.min(Math.max(requested, 1), totalPages) - 1;
+			if (target !== currentPage) {
+				currentPage = target;
+				render();
+			}
+		};
+
+		jumpInput.addEventListener("change", jump);
+		jumpInput.addEventListener("keydown", (event) => {
+			if (event.key === "Enter") {
+				event.preventDefault();
+				jump();
+			}
+		});
+	}
+
+	render();
+</script>

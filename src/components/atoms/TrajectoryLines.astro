@@ -1,0 +1,193 @@
+---
+import { motionConfig } from "../../config";
+
+interface Props {
+	variant?: "default" | "article";
+	/** 文章页使用：保留静态轨迹，停止虚线/轨道/节点动画 */
+	quiet?: boolean;
+	/** 功能页使用：让虚线缓慢流动、节点呼吸 */
+	flow?: boolean;
+}
+
+const { variant = "default", quiet = false, flow = false } = Astro.props;
+const flowEnabled =
+	flow &&
+	!quiet &&
+	motionConfig.enabled &&
+	motionConfig.ambient.pageHeroOrbit;
+---
+
+<div
+	class:list={[
+		"trajectory-lines",
+		`trajectory-lines--${variant}`,
+		quiet && "trajectory-lines--quiet",
+		flowEnabled && "trajectory-lines--flow",
+	]}
+	aria-hidden="true"
+>
+	<svg viewBox="0 0 1600 1200" preserveAspectRatio="none">
+		<path
+			class="trajectory-lines__path"
+			d="M-80 160 C 260 40 820 120 1680 360"
+		/>
+		<path
+			class="trajectory-lines__path trajectory-lines__path--soft"
+			d="M-80 900 C 420 740 920 800 1680 1040"
+		/>
+		<path
+			class="trajectory-lines__path trajectory-lines__path--vertical"
+			d="M 1320 -80 C 1120 300 1280 820 1120 1280"
+		/>
+		<path
+			class="trajectory-lines__path trajectory-lines__path--rail"
+			d="M 120 -40 L 120 1240"
+		/>
+		<path
+			class="trajectory-lines__path trajectory-lines__path--rail"
+			d="M 1480 -40 L 1480 1240"
+		/>
+		<circle class="trajectory-lines__orbit" cx="1280" cy="260" r="190" />
+		<circle
+			class="trajectory-lines__orbit trajectory-lines__orbit--soft"
+			cx="1180"
+			cy="320"
+			r="260"
+		/>
+		<circle class="trajectory-lines__node" cx="1470" cy="260" r="3" />
+	</svg>
+	<span class="trajectory-lines__signal"></span>
+</div>
+
+<style>
+	.trajectory-lines {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		overflow: hidden;
+		color: var(--ink);
+		opacity: 0.28;
+		pointer-events: none;
+	}
+
+	.trajectory-lines svg {
+		width: 100%;
+		height: 100%;
+	}
+
+	.trajectory-lines__path {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1;
+		stroke-dasharray: 2 18;
+		vector-effect: non-scaling-stroke;
+	}
+
+	.trajectory-lines__path--soft {
+		opacity: 0.5;
+	}
+
+	.trajectory-lines__path--vertical {
+		opacity: 0.55;
+	}
+
+	.trajectory-lines__path--rail {
+		opacity: 0.38;
+	}
+
+	.trajectory-lines__orbit {
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1;
+		stroke-dasharray: 2 20;
+		vector-effect: non-scaling-stroke;
+		opacity: 0.45;
+	}
+
+	.trajectory-lines__orbit--soft {
+		opacity: 0.25;
+		stroke-dasharray: 1 32;
+	}
+
+	.trajectory-lines__node {
+		fill: currentColor;
+		opacity: 0.8;
+	}
+
+	.trajectory-lines__signal {
+		position: absolute;
+		top: 21%;
+		left: 11%;
+		width: 5px;
+		height: 5px;
+		border: 1px solid currentColor;
+		border-radius: 50%;
+	}
+
+	.trajectory-lines--article {
+		opacity: 0.08;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.trajectory-lines--flow .trajectory-lines__path {
+			animation: trajectory-flow 24s linear infinite;
+		}
+
+		.trajectory-lines--flow .trajectory-lines__node {
+			animation: trajectory-node 5s ease-in-out infinite alternate;
+		}
+	}
+
+	@keyframes trajectory-flow {
+		to {
+			stroke-dashoffset: -200;
+		}
+	}
+
+	@keyframes trajectory-node {
+		from {
+			opacity: 0.3;
+		}
+		to {
+			opacity: 0.95;
+		}
+	}
+
+	.trajectory-lines--quiet .trajectory-lines__path,
+	.trajectory-lines--quiet .trajectory-lines__orbit,
+	.trajectory-lines--quiet .trajectory-lines__node {
+		animation: none;
+	}
+
+	.trajectory-lines--quiet .trajectory-lines__signal {
+		display: none;
+	}
+
+	.trajectory-lines--article.trajectory-lines--quiet .trajectory-lines__orbit,
+	.trajectory-lines--article.trajectory-lines--quiet .trajectory-lines__node {
+		display: none;
+	}
+
+	.trajectory-lines--article .trajectory-lines__signal {
+		top: 18%;
+		left: 7%;
+	}
+
+	@media (max-width: 767px) {
+		.trajectory-lines__path--soft,
+		.trajectory-lines__path--vertical,
+		.trajectory-lines__path--rail,
+		.trajectory-lines__orbit,
+		.trajectory-lines__signal {
+			display: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.trajectory-lines__path,
+		.trajectory-lines__orbit,
+		.trajectory-lines__node {
+			animation: none;
+		}
+	}
+</style>

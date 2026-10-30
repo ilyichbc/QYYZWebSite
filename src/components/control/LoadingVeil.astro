@@ -1,0 +1,101 @@
+---
+import { motionConfig, siteConfig } from "../../config";
+import { resolveAsset } from "../../utils/assets";
+
+const enabled = motionConfig.enabled && motionConfig.signature.heroScan;
+const logo = siteConfig.identity.logo;
+const showLogo = logo.mode === "image" && Boolean(logo.image);
+---
+
+{enabled && (
+	<div class="loading-veil" data-loading-veil aria-hidden="true">
+		{showLogo ? (
+			<img
+				class="loading-veil__logo"
+				src={resolveAsset(logo.image)}
+				alt=""
+			/>
+		) : (
+			<span class="loading-veil__mark">祁</span>
+		)}
+		<span class="loading-veil__line"></span>
+		<span class="loading-veil__label">QIYANG NO.1 HIGH SCHOOL / LOADING</span>
+	</div>
+)}
+
+<style>
+	.loading-veil {
+		position: fixed;
+		inset: 0;
+		z-index: 400;
+		display: grid;
+		place-content: center;
+		justify-items: center;
+		gap: 1.1rem;
+		background: var(--paper);
+		color: var(--ink);
+		pointer-events: none;
+		clip-path: inset(0 0 0 0);
+		transition:
+			clip-path 800ms var(--ease-snap),
+			opacity 300ms ease 500ms;
+	}
+
+	.loading-veil.is-done {
+		clip-path: inset(0 0 100% 0);
+		opacity: 0;
+	}
+
+	.loading-veil__mark {
+		font-size: clamp(3.4rem, 11vw, 7rem);
+		font-weight: 800;
+		line-height: 1;
+	}
+
+	.loading-veil__logo {
+		width: clamp(10rem, 28vw, 20rem);
+		height: auto;
+		max-height: 30vh;
+		object-fit: contain;
+	}
+
+	.loading-veil__line {
+		position: relative;
+		width: min(18rem, 58vw);
+		height: 2px;
+		overflow: hidden;
+		background: var(--line-strong);
+	}
+
+	.loading-veil__line::after {
+		position: absolute;
+		inset: 0;
+		background: var(--accent);
+		content: "";
+		transform-origin: left;
+		animation: loading-line 1100ms var(--ease-snap) both;
+	}
+
+	.loading-veil__label {
+		color: var(--muted);
+		font-family: var(--font-latin);
+		font-size: 0.6rem;
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+	}
+
+	@keyframes loading-line {
+		from {
+			transform: scaleX(0);
+		}
+		to {
+			transform: scaleX(1);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.loading-veil {
+			display: none;
+		}
+	}
+</style>

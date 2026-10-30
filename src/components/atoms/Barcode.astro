@@ -1,0 +1,59 @@
+---
+import { motionConfig } from "../../config";
+
+interface Props {
+	seed: string;
+	label?: string;
+	height?: number;
+	count?: number;
+	class?: string;
+	/** 进入视口或悬停时扫描一次 */
+	scan?: boolean;
+}
+
+const {
+	seed,
+	label,
+	height = 22,
+	count = 34,
+	class: className = "",
+	scan = true,
+} = Astro.props;
+
+const scanEnabled = scan && motionConfig.feedback.barcodeScan;
+
+let state = 2166136261;
+for (let index = 0; index < seed.length; index += 1) {
+	state ^= seed.charCodeAt(index);
+	state = Math.imul(state, 16777619);
+}
+state = state >>> 0 || 1;
+
+const bars = Array.from({ length: count }, (_, index) => {
+	state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+	const width = 1 + (state % 3);
+	state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+	const gap = 1 + (state % 2);
+	const tall = index % 7 === 0 || index === count - 1;
+	const barHeight = tall ? 100 : 58 + (state % 42);
+
+	return { width, gap, height: barHeight };
+});
+---
+
+<div
+	class:list={["barcode", className]}
+	style={`--barcode-height: ${height}px`}
+	aria-hidden="true"
+>
+	<span class="barcode__bars">
+		{bars.map((bar, index) => (
+			<span
+				class="barcode__bar"
+				style={`--bar-w: ${bar.width}px; --bar-gap: ${bar.gap}px; --bar-h: ${bar.height}%; --i: ${index}`}
+			/>
+		))}
+	</span>
+	{scanEnabled && <span class="barcode__scan" aria-hidden="true" />}
+	{label && <span class="barcode__label">{label}</span>}
+</div>

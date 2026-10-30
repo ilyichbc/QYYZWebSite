@@ -1,0 +1,54 @@
+---
+import type { IconName } from "../../types/icon";
+import { withBase } from "../../utils/assets";
+import Icon from "./Icon.astro";
+
+interface Props {
+	href: string;
+	variant?: "solid" | "accent" | "ghost";
+	size?: "md" | "sm";
+	external?: boolean;
+	icon?: IconName | false;
+	class?: string;
+	label?: string;
+}
+
+const {
+	href,
+	variant = "accent",
+	size = "md",
+	external = false,
+	icon,
+	class: className = "",
+	label,
+} = Astro.props;
+
+const iconName: IconName | false =
+	icon ?? (external ? "arrow-up-right" : "arrow-right");
+const isExternal =
+	external ||
+	/^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(href) ||
+	href.startsWith("mailto:") ||
+	href.startsWith("tel:");
+const resolvedHref = isExternal ? href : withBase(href);
+---
+
+<a
+	href={resolvedHref}
+	class:list={[
+		"btn",
+		variant === "solid" && "btn--solid",
+		variant === "accent" && "btn--accent",
+		variant === "ghost" && "btn--ghost",
+		size === "sm" && "btn--sm",
+		className,
+	]}
+	target={isExternal ? "_blank" : undefined}
+	rel={isExternal ? "noopener noreferrer" : undefined}
+	data-astro-prefetch={isExternal ? undefined : "hover"}
+>
+	<span>
+		<slot>{label}</slot>
+	</span>
+	{iconName && <Icon name={iconName} size="1.05em" />}
+</a>

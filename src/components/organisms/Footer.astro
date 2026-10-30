@@ -1,0 +1,347 @@
+---
+import Barcode from "../atoms/Barcode.astro";
+import Icon from "../atoms/Icon.astro";
+import { bannerConfig, siteConfig } from "../../config";
+import { resolveAsset } from "../../utils/assets";
+import { filterNavItems } from "../../utils/pages";
+
+const { identity, footer } = siteConfig;
+const columns = footer.columns.map((column) => ({
+	...column,
+	links: filterNavItems(column.links),
+}));
+const social = filterNavItems(footer.social);
+const footerBackground = resolveAsset(bannerConfig.background);
+---
+
+<footer
+	class="site-footer"
+	style={`--footer-image: url("${footerBackground}")`}
+>
+	<div class="container site-footer__inner">
+		<div class="site-footer__top">
+			<div class="site-footer__brand">
+				<p class="eyebrow">// QIYANG NO.1 HIGH SCHOOL</p>
+				<p class="site-footer__statement">{footer.statement}</p>
+				<p class="site-footer__meta meta-field">
+					<span>{identity.location}</span>
+					<span>EST. {identity.foundingYear}</span>
+				</p>
+				<Barcode
+					class="site-footer__barcode"
+					seed={identity.nameLatin}
+					label={`${identity.foundingYear} / ${identity.nameLatin}`}
+					height={18}
+					count={32}
+				/>
+			</div>
+
+			<div class="site-footer__cols">
+				{columns.map((column) => (
+					<div>
+						<p class="site-footer__col-title">
+							<span>{column.latin}</span>
+							{column.title}
+						</p>
+						<ul>
+							{column.links.map((link) => (
+								<li>
+									<a
+										href={link.href}
+										class="site-footer__link"
+										target={
+											link.external ? "_blank" : undefined
+										}
+										rel={
+											link.external
+												? "noopener noreferrer"
+												: undefined
+										}
+									>
+										{link.label}
+									</a>
+								</li>
+							))}
+						</ul>
+					</div>
+				))}
+				<div>
+					<p class="site-footer__col-title">
+						<span>ELSEWHERE</span>
+						在别处
+					</p>
+					<ul>
+						{social.map((link) => (
+							<li>
+								<a
+									href={link.href}
+									class="site-footer__link"
+									target={
+										link.external ? "_blank" : undefined
+									}
+									rel={
+										link.external
+											? "noopener noreferrer"
+											: undefined
+									}
+								>
+									{link.label}
+									{link.external && (
+										<Icon
+											name="arrow-up-right"
+											size="0.8em"
+										/>
+									)}
+								</a>
+							</li>
+						))}
+					</ul>
+				</div>
+			</div>
+		</div>
+
+		<div class="site-footer__bottom">
+			<p>{footer.copyright}</p>
+			<div class="site-footer__bottom-links">
+				{footer.icp && (
+					<a
+						href={footer.icp.href}
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						{footer.icp.label}
+					</a>
+				)}
+				{footer.backToTop && (
+					<a class="site-footer__top-link" href="#top">
+						返回顶部
+						<Icon name="arrow-up" size="0.85em" />
+					</a>
+				)}
+			</div>
+		</div>
+	</div>
+
+	<div class="site-footer__wordmark" aria-hidden="true">
+		{identity.nameLatin}
+	</div>
+</footer>
+
+<style>
+	.site-footer {
+		position: relative;
+		isolation: isolate;
+		overflow: hidden;
+		margin-top: 0;
+		padding-top: clamp(3rem, 6vw, 5rem);
+		border-top: 1px solid rgba(247, 251, 253, 0.16);
+		background-color: #07121a;
+		background-image:
+			linear-gradient(
+				180deg,
+				rgba(7, 18, 26, 0.93) 0%,
+				rgba(7, 18, 26, 0.97) 100%
+			),
+			var(--footer-image);
+		background-position: center;
+		background-size: cover;
+		color: #f3f8fa;
+		--ink: #f3f8fa;
+		--ink-soft: #c9d8df;
+		--muted: #8fa6b1;
+		--line: rgba(247, 251, 253, 0.16);
+		--line-strong: rgba(247, 251, 253, 0.4);
+		--accent: #7fd2ff;
+		--accent-ink: #04121a;
+		--accent-soft: rgba(127, 210, 255, 0.16);
+	}
+
+	.site-footer::before {
+		position: absolute;
+		top: 1rem;
+		right: 0;
+		left: 0;
+		height: 1px;
+		background: repeating-linear-gradient(
+			90deg,
+			rgba(247, 251, 253, 0.18) 0 2px,
+			transparent 2px 52px
+		);
+		content: "";
+		opacity: 0.55;
+		pointer-events: none;
+	}
+
+	.site-footer__inner {
+		position: relative;
+		z-index: 1;
+	}
+
+	.site-footer__top {
+		display: grid;
+		grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+		gap: clamp(2.5rem, 6vw, 6rem);
+		padding-bottom: clamp(2.5rem, 5vw, 4rem);
+	}
+
+	.site-footer__statement {
+		max-width: 26rem;
+		margin-top: 1.2rem;
+		color: var(--ink);
+		font-size: clamp(1.2rem, 2vw, 1.55rem);
+		font-weight: 500;
+		line-height: 1.75;
+		letter-spacing: -0.01em;
+		text-wrap: pretty;
+	}
+
+	.site-footer__meta {
+		margin-top: 1.4rem;
+	}
+
+	:global(.site-footer__barcode) {
+		display: flex;
+		width: fit-content;
+		margin-top: 1rem;
+		opacity: 0.36;
+	}
+
+	.site-footer__cols {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1.5rem;
+	}
+
+	.site-footer__col-title {
+		display: flex;
+		flex-direction: column;
+		color: var(--ink-soft);
+		font-size: 0.9rem;
+		font-weight: 500;
+		line-height: 1.4;
+	}
+
+	.site-footer__col-title span {
+		color: var(--muted);
+		font-family: var(--font-latin);
+		font-size: 0.54rem;
+		font-weight: 500;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+	}
+
+	.site-footer__cols ul {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		margin-top: 1rem;
+	}
+
+	.site-footer__link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		color: var(--muted);
+		font-size: 0.84rem;
+		line-height: 1.7;
+		transition: color var(--dur-fast) var(--ease-mech);
+	}
+
+	.site-footer__link:hover {
+		color: var(--ink);
+	}
+
+	.site-footer__bottom {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		padding-block: 1.3rem;
+		border-top: 1px solid var(--line);
+		color: var(--muted);
+		font-size: 0.72rem;
+	}
+
+	.site-footer__bottom-links {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 1.2rem;
+	}
+
+	.site-footer__bottom a {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		transition: color var(--dur-fast) var(--ease-mech);
+	}
+
+	.site-footer__bottom a:hover {
+		color: var(--ink);
+	}
+
+	.site-footer__top-link {
+		font-family: var(--font-latin);
+		font-size: 0.64rem;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+	}
+
+	.site-footer__wordmark {
+		position: relative;
+		z-index: 0;
+		margin-top: clamp(0.5rem, 2vw, 1.2rem);
+		color: transparent;
+		font-family: var(--font-latin);
+		font-size: clamp(4rem, 15vw, 15rem);
+		font-stretch: 125%;
+		font-weight: 700;
+		line-height: 0.72;
+		letter-spacing: -0.02em;
+		text-align: center;
+		text-transform: uppercase;
+		-webkit-text-stroke: 1px rgba(247, 251, 253, 0.18);
+		white-space: nowrap;
+		pointer-events: none;
+		user-select: none;
+		transform: translateY(0.12em);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.site-footer__wordmark {
+			animation: wordmark-breathe 8s ease-in-out infinite alternate;
+		}
+	}
+
+	@keyframes wordmark-breathe {
+		from {
+			opacity: 0.55;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@media (max-width: 900px) {
+		.site-footer__top {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.site-footer__cols {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 2rem 1.5rem;
+		}
+	}
+
+	@media (max-width: 560px) {
+		.site-footer__bottom {
+			flex-direction: column;
+			align-items: flex-start;
+		}
+
+		.site-footer__cols {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+</style>

@@ -1,0 +1,273 @@
+---
+import { motionConfig } from "../../config";
+
+interface Props {
+	variant?: "section" | "page";
+	/** 文章页使用：保留静态线条，停止轨道/光点的持续动画 */
+	quiet?: boolean;
+	/** 头图环境层：让虚线弧与光点进入工作状态 */
+	ambient?: boolean;
+}
+
+const { variant = "section", quiet = false, ambient = false } = Astro.props;
+const ambientEnabled =
+	ambient &&
+	!quiet &&
+	motionConfig.enabled &&
+	(variant === "page"
+		? motionConfig.ambient.pageHeroOrbit
+		: motionConfig.ambient.sectionDrift);
+---
+
+<div
+	class:list={[
+		"space-lines",
+		`space-lines--${variant}`,
+		quiet && "space-lines--quiet",
+		ambientEnabled && "space-lines--ambient",
+	]}
+	aria-hidden="true"
+>
+	<span class="space-lines__v space-lines__v--left"></span>
+	<span class="space-lines__v space-lines__v--right"></span>
+	<span class="space-lines__h"></span>
+	<span class="space-lines__cross space-lines__cross--one"></span>
+	<span class="space-lines__cross space-lines__cross--two"></span>
+	<span class="space-lines__arc"></span>
+	<span class="space-lines__arc space-lines__arc--two"></span>
+	<span class="space-lines__trail"></span>
+</div>
+
+<style>
+	.space-lines {
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		color: var(--ink);
+		opacity: 0.2;
+		pointer-events: none;
+	}
+
+	.space-lines__v {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		width: 1px;
+		background: currentColor;
+		opacity: 0.4;
+	}
+
+	.space-lines__v--left {
+		left: max(1.25rem, 6vw);
+	}
+
+	.space-lines__v--right {
+		right: max(1.25rem, 6vw);
+	}
+
+	.space-lines__h {
+		position: absolute;
+		top: 23%;
+		left: 0;
+		right: 0;
+		height: 1px;
+		background: currentColor;
+		opacity: 0.28;
+	}
+
+	.space-lines__cross {
+		position: absolute;
+		width: 13px;
+		height: 13px;
+		border: 1px solid currentColor;
+		opacity: 0.5;
+	}
+
+	.space-lines__cross::before,
+	.space-lines__cross::after {
+		position: absolute;
+		background: currentColor;
+		content: "";
+	}
+
+	.space-lines__cross::before {
+		top: 5px;
+		left: -5px;
+		width: 21px;
+		height: 1px;
+	}
+
+	.space-lines__cross::after {
+		top: -5px;
+		left: 5px;
+		width: 1px;
+		height: 21px;
+	}
+
+	.space-lines__cross--one {
+		top: 23%;
+		left: calc(max(1.25rem, 6vw) - 6.5px);
+	}
+
+	.space-lines__cross--two {
+		right: calc(max(1.25rem, 6vw) - 6.5px);
+		bottom: 16%;
+	}
+
+	.space-lines__arc {
+		position: absolute;
+		top: 9%;
+		right: -15%;
+		width: min(52vw, 720px);
+		aspect-ratio: 1;
+		border: 1px dashed currentColor;
+		border-radius: 50%;
+		opacity: 0.28;
+	}
+
+	.space-lines__arc--two {
+		top: auto;
+		right: auto;
+		bottom: -18%;
+		left: -22%;
+		width: min(42vw, 560px);
+		opacity: 0.16;
+	}
+
+	.space-lines__arc::after {
+		position: absolute;
+		top: 12%;
+		left: 7%;
+		width: 4px;
+		height: 4px;
+		border-radius: 50%;
+		background: currentColor;
+		box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 12%, transparent);
+		content: "";
+	}
+
+	.space-lines__trail {
+		position: absolute;
+		top: 62%;
+		left: -8%;
+		width: 62%;
+		height: 1px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			currentColor 28%,
+			transparent 86%
+		);
+		opacity: 0.45;
+		transform: rotate(-12deg);
+		transform-origin: left center;
+	}
+
+	.space-lines__trail::after {
+		position: absolute;
+		top: -2px;
+		left: 0;
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background: currentColor;
+		box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 12%, transparent);
+		content: "";
+	}
+
+	.space-lines--page .space-lines__h {
+		top: 76%;
+	}
+
+	.space-lines--page .space-lines__cross--one {
+		top: 76%;
+	}
+
+	.space-lines--page .space-lines__cross--two {
+		bottom: 10%;
+	}
+
+	.space-lines--page .space-lines__trail {
+		top: 44%;
+		left: auto;
+		right: -6%;
+		width: 48%;
+		transform: rotate(9deg);
+		transform-origin: right center;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.space-lines--ambient .space-lines__arc:not(.space-lines__arc--two) {
+			animation: space-orbit 20s linear infinite;
+		}
+
+		.space-lines--ambient .space-lines__trail::after {
+			animation: trail-drift 20s ease-in-out infinite alternate;
+		}
+
+		.space-lines--ambient .space-lines__arc::after {
+			animation: arc-twinkle 7s ease-in-out infinite alternate;
+		}
+	}
+
+	@keyframes trail-drift {
+		from {
+			opacity: 0.35;
+			transform: translateX(0);
+		}
+		to {
+			opacity: 0.9;
+			transform: translateX(min(38vw, 420px));
+		}
+	}
+
+	@keyframes arc-twinkle {
+		from {
+			opacity: 0.3;
+			transform: scale(0.7);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1.15);
+		}
+	}
+
+	.space-lines--quiet .space-lines__arc {
+		animation: none;
+	}
+
+	.space-lines--quiet .space-lines__trail::after {
+		display: none;
+		animation: none;
+	}
+
+	@keyframes space-orbit {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	@media (max-width: 767px) {
+		.space-lines__arc,
+		.space-lines__arc--two,
+		.space-lines__cross--two {
+			display: none;
+		}
+
+		.space-lines__h {
+			opacity: 0.18;
+		}
+
+		.space-lines__trail {
+			width: 78%;
+			opacity: 0.3;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.space-lines__arc,
+		.space-lines__trail::after {
+			animation: none;
+		}
+	}
+</style>

@@ -1,0 +1,56 @@
+---
+import { bannerConfig, motionConfig } from "../../config";
+import { resolveAsset } from "../../utils/assets";
+
+const { particleEcho } = bannerConfig;
+const enabled =
+	motionConfig.enabled &&
+	motionConfig.decor.particles &&
+	particleEcho.enabled;
+---
+
+{enabled && (
+	<canvas
+		class="particle-echo"
+		data-particle-echo
+		data-mode={particleEcho.mode}
+		data-text={particleEcho.text}
+		data-image={particleEcho.image ? resolveAsset(particleEcho.image) : ""}
+		data-count={particleEcho.count}
+		data-stir={particleEcho.stir}
+		data-spring={particleEcho.spring}
+		data-scale={particleEcho.scale ?? 1}
+		data-opacity={particleEcho.opacity ?? 0.72}
+		data-figure-size={particleEcho.figureSize ?? 1}
+		data-offset-x={particleEcho.offsetX ?? 0}
+		data-offset-y={particleEcho.offsetY ?? 0}
+		data-edge-fade={particleEcho.edgeFade ?? true}
+		data-edge-fade-width={particleEcho.edgeFadeWidth ?? 0.24}
+		aria-hidden="true"
+	/>
+)}
+
+<style>
+	.particle-echo {
+		position: fixed;
+		inset: 0;
+		z-index: 1;
+		width: 100vw;
+		height: 100vh;
+		color: var(--media-accent, var(--accent));
+		opacity: 0.72;
+		pointer-events: none;
+	}
+
+	@media (max-width: 1023px) {
+		.particle-echo {
+			display: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.particle-echo {
+			opacity: 0.45;
+		}
+	}
+</style>

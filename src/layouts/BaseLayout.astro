@@ -1,0 +1,98 @@
+---
+import "@fontsource-variable/saira/wdth.css";
+import "../styles/tokens.css";
+import "../styles/base.css";
+import "../styles/components.css";
+
+import { motionConfig, siteConfig } from "../config";
+import Footer from "../components/organisms/Footer.astro";
+import Navbar from "../components/organisms/Navbar.astro";
+import ScrollTop from "../components/control/ScrollTop.astro";
+import LoadingVeil from "../components/control/LoadingVeil.astro";
+import Head from "./partials/Head.astro";
+
+interface Props {
+	title?: string;
+	description?: string;
+	image?: string;
+	noindex?: boolean;
+	pageType?: "home" | "page" | "article" | "notfound";
+	snap?: boolean;
+	showFooter?: boolean;
+	transparentHeader?: boolean;
+	article?: {
+		published: Date;
+		updated?: Date;
+		author?: string;
+	};
+}
+
+const {
+	title = siteConfig.identity.name,
+	description = siteConfig.identity.description,
+	image,
+	noindex = false,
+	pageType = "page",
+	snap = false,
+	showFooter = true,
+	transparentHeader = false,
+	article,
+} = Astro.props;
+
+const snapEnabled =
+	snap && motionConfig.enabled && motionConfig.scrollSnap.enabled;
+const snapMobile = snapEnabled && motionConfig.scrollSnap.mobile;
+const motionEnabled = motionConfig.enabled;
+---
+
+<!doctype html>
+<html
+	lang={siteConfig.lang}
+	data-motion={motionEnabled ? "on" : "off"}
+	data-reveal={motionConfig.reveal ? "on" : "off"}
+	data-snap={snapEnabled ? "on" : undefined}
+	data-snap-mobile={snapMobile ? "on" : undefined}
+	data-button-signal={motionConfig.feedback.buttonSignal ? "on" : "off"}
+	style={`--snap-type: ${motionConfig.scrollSnap.behavior}; --snap-stop: ${motionConfig.scrollSnap.stop}; --reveal-distance: ${motionConfig.narrative.revealDistance}px`}
+>
+	<head>
+		<Head
+			title={title}
+			description={description}
+			image={image}
+			noindex={noindex}
+			type={pageType === "article" ? "article" : "website"}
+			article={article}
+		/>
+	</head>
+	<body class:list={["site", `site--${pageType}`]}>
+		<LoadingVeil />
+		<a class="skip-link" href="#main">
+			跳到主要内容
+		</a>
+		<span id="top"></span>
+		<div class="orbit-progress" data-orbit-progress aria-hidden="true">
+			<span class="orbit-progress__rail"></span>
+			<span class="orbit-progress__fill"></span>
+			<span class="orbit-progress__node"></span>
+		</div>
+		<div class="edge-rail" aria-hidden="true"></div>
+		<div class="theme-transition" data-theme-transition aria-hidden="true">
+			<span class="theme-transition__ring"></span>
+			<span class="theme-transition__ring theme-transition__ring--two"></span>
+			<span class="theme-transition__scan"></span>
+			<span class="theme-transition__label" data-theme-transition-label>
+				MODE // LIGHT
+			</span>
+		</div>
+		<Navbar overHero={transparentHeader} />
+		<main id="main">
+			<slot />
+		</main>
+		{showFooter && <Footer />}
+		{siteConfig.footer.backToTop && <ScrollTop />}
+		<script>
+			import "../scripts/site";
+		</script>
+	</body>
+</html>

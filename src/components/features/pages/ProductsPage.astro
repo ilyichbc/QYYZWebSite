@@ -1,0 +1,122 @@
+---
+import { productsConfig, siteConfig } from "../../../config";
+import { isExternalLink } from "../../../utils/assets";
+import { getProductHref } from "../../../utils/products";
+import Barcode from "../../atoms/Barcode.astro";
+import Image from "../../atoms/Image.astro";
+import PageLayout from "../../../layouts/PageLayout.astro";
+
+const page = siteConfig.page.products;
+const items = productsConfig.items.filter((item) => item.enabled);
+---
+
+<PageLayout
+	title={page.title}
+	description={page.description}
+	eyebrow={productsConfig.eyebrow}
+	heroTitle={productsConfig.title}
+	lead={productsConfig.lead}
+	latin="PRODUCTS"
+	index={String(page.navOrder).padStart(2, "0")}
+	meta={[`${items.length} 个产品`]}
+	hero={productsConfig.hero}
+>
+	<section class="section">
+		<div class="container">
+			<div
+				class:list={[
+					"product-grid",
+					items.length === 1 && "product-grid--single",
+				]}
+			>
+				{items.map((item, index) => {
+					const cardHref = getProductHref(item);
+					const Tag = (cardHref ? "a" : "article") as "a" | "article";
+					const external = Boolean(
+						cardHref && isExternalLink(cardHref),
+					);
+
+					return (
+						<Tag
+							class="product-card"
+							id={item.id}
+							href={cardHref}
+							data-tilt
+							data-reveal
+							style={`--reveal-delay: ${index * 70}ms`}
+							target={external ? "_blank" : undefined}
+							rel={external ? "noopener noreferrer" : undefined}
+						>
+							<div class="product-card__media">
+								<Image
+									src={item.image}
+									alt={item.imageAlt}
+									sizes="(max-width: 900px) 100vw, 45vw"
+								/>
+								<span class="tag">{item.index}</span>
+								<span
+									class="product-card__scan"
+									aria-hidden="true"
+								/>
+								{item.status && (
+									<span class="status product-card__status">
+										{item.status}
+									</span>
+								)}
+							</div>
+							<div class="product-card__body">
+								<span class="product-card__latin">
+									{item.latin}
+								</span>
+								<h2 class="product-card__title">
+									{item.title}
+								</h2>
+								<p class="product-card__desc">
+									{item.description}
+								</p>
+								<Barcode
+									class="product-card__barcode"
+									seed={item.slug || item.id}
+									label={
+										item.year
+											? `${item.index} / ${item.year}`
+											: item.index
+									}
+									height={18}
+									count={30}
+								/>
+								{(item.tags?.length || item.year) && (
+									<div class="product-card__footer">
+										<div class="product-card__tags">
+											{item.tags?.map((tag) => (
+												<span class="tag">{tag}</span>
+											))}
+										</div>
+										{item.year && (
+											<span class="product-card__year">
+												{item.year}
+											</span>
+										)}
+									</div>
+								)}
+							</div>
+						</Tag>
+					);
+				})}
+			</div>
+
+			<p class="products-note" data-reveal>
+				{productsConfig.note}
+			</p>
+		</div>
+	</section>
+</PageLayout>
+
+<style>
+	.products-note {
+		margin-top: 2rem;
+		color: var(--muted);
+		font-size: 0.76rem;
+		text-align: right;
+	}
+</style>

@@ -1,0 +1,50 @@
+---
+import ButtonLink from "../components/atoms/ButtonLink.astro";
+import Image from "../components/atoms/Image.astro";
+import SpaceLines from "../components/atoms/SpaceLines.astro";
+import ContourField from "../components/atoms/ContourField.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { siteConfig } from "../config";
+import "../styles/page.css";
+
+const newsEnabled = siteConfig.page.news.enabled;
+---
+
+<BaseLayout
+	title="页面未找到"
+	description="你访问的页面不存在，可能已经被移走。"
+	pageType="notfound"
+	noindex
+	showFooter={false}
+>
+	<section class="not-found" data-hero>
+		<Image
+			src="/images/backgrounds/hero-sky.webp"
+			alt=""
+			class="not-found__bg"
+			priority
+		/>
+		<div class="not-found__overlay" aria-hidden="true"></div>
+		<SpaceLines variant="page" />
+		<ContourField variant="page" opacity={0.12} />
+		<div class="not-found__inner">
+			<p class="not-found__code" aria-hidden="true">
+				404
+			</p>
+			<h1 class="not-found__title">这一页不存在。</h1>
+			<p class="not-found__text">
+				你访问的地址不存在，或者它已经被移动到别处。可以回到首页，或者去看看最近的新闻。
+			</p>
+			<div class="not-found__actions">
+				<ButtonLink href="/" variant="solid">
+					回到首页
+				</ButtonLink>
+				{newsEnabled && (
+					<ButtonLink href="/news/" variant="ghost">
+						查看新闻
+					</ButtonLink>
+				)}
+			</div>
+		</div>
+	</section>
+</BaseLayout>

@@ -1,0 +1,547 @@
+---
+import Image from "../atoms/Image.astro";
+import Icon from "../atoms/Icon.astro";
+import { bannerConfig, siteConfig } from "../../config";
+import { resolveAsset, withBase } from "../../utils/assets";
+import { getNavItems, isActivePath } from "../../utils/pages";
+
+interface Props {
+	overHero?: boolean;
+}
+
+const { overHero = false } = Astro.props;
+const { identity, navbar } = siteConfig;
+const navItems = getNavItems();
+const currentPath = Astro.url.pathname;
+const logoIsImage =
+	identity.logo.mode === "image" && Boolean(identity.logo.image);
+const menuBackground = resolveAsset(bannerConfig.background);
+---
+
+<header
+	class:list={["site-header", !overHero && "is-solid"]}
+	data-site-header
+	data-over-hero={overHero ? "true" : "false"}
+>
+	<div class="site-header__inner container">
+		<a
+			class="brand"
+			href={withBase("/")}
+			aria-label={`${identity.name} 首页`}
+		>
+			{logoIsImage ? (
+				<Image
+					src={identity.logo.image}
+					alt={identity.logo.alt}
+					width={32}
+					height={32}
+					class="brand__logo"
+					priority
+				/>
+			) : (
+				<span class="brand__mark" aria-hidden="true">
+					星
+				</span>
+			)}
+			<span class="brand__text">
+				<span class="brand__cn">{identity.name}</span>
+				<span class="brand__latin">{identity.nameLatin}</span>
+			</span>
+		</a>
+
+		<nav class="site-nav" aria-label="主导航">
+			<ul>
+				{navItems.map((item) => (
+					<li>
+						<a
+							href={item.href}
+							class:list={[
+								"nav-link",
+								isActivePath(currentPath, item.href) &&
+									"is-active",
+							]}
+							aria-current={
+								isActivePath(currentPath, item.href)
+									? "page"
+									: undefined
+							}
+							data-astro-prefetch="hover"
+							target={item.external ? "_blank" : undefined}
+							rel={
+								item.external
+									? "noopener noreferrer"
+									: undefined
+							}
+						>
+							<span class="nav-link__latin">{item.latin}</span>
+							<span class="nav-link__cn">{item.label}</span>
+						</a>
+					</li>
+				))}
+			</ul>
+		</nav>
+
+		<div class="site-header__actions">
+			{navbar.showStatus && (
+				<span class="status site-header__status">
+					{navbar.statusText}
+				</span>
+			)}
+			{navbar.showThemeToggle && (
+				<button
+					class="icon-btn theme-toggle"
+					type="button"
+					data-theme-toggle
+					aria-label="切换明暗主题"
+					title="切换明暗主题"
+				>
+					<span class="theme-toggle__sun">
+						<Icon name="sun" size="1rem" />
+					</span>
+					<span class="theme-toggle__moon">
+						<Icon name="moon" size="1rem" />
+					</span>
+				</button>
+			)}
+			<button
+				class="icon-btn site-header__menu"
+				type="button"
+				data-menu-toggle
+				aria-label="打开导航菜单"
+				aria-expanded="false"
+				aria-controls="mobile-menu"
+			>
+				<Icon name="menu" size="1.05rem" />
+			</button>
+		</div>
+	</div>
+</header>
+
+<div
+	class="mobile-menu"
+	id="mobile-menu"
+	data-mobile-menu
+	aria-hidden="true"
+	inert
+	style={`--menu-bg: url("${menuBackground}")`}
+>
+	<div class="mobile-menu__inner">
+		<div class="mobile-menu__head">
+			<span class="eyebrow">// NAVIGATION</span>
+			<button
+				class="icon-btn"
+				type="button"
+				data-menu-close
+				aria-label="关闭导航菜单"
+			>
+				<Icon name="close" size="1.05rem" />
+			</button>
+		</div>
+
+		<nav class="mobile-nav" aria-label="移动端导航">
+			{navItems.map((item, index) => (
+				<a
+					href={item.href}
+					class:list={[
+						"mobile-nav__link",
+						isActivePath(currentPath, item.href) && "is-active",
+					]}
+					aria-current={
+						isActivePath(currentPath, item.href)
+							? "page"
+							: undefined
+					}
+					data-astro-prefetch="hover"
+				>
+					<span class="mobile-nav__index">
+						{String(index + 1).padStart(2, "0")}
+					</span>
+					<span>
+						<span class="mobile-nav__latin">{item.latin}</span>
+						<span class="mobile-nav__cn">{item.label}</span>
+					</span>
+					<Icon name="arrow-up-right" size="1rem" />
+				</a>
+			))}
+		</nav>
+
+		<div class="mobile-menu__foot">
+			<p>{identity.tagline}</p>
+			<p class="meta-field">
+				<span>{identity.location}</span>
+				<span>{identity.foundingYear}</span>
+			</p>
+			<p>
+				<a class="link-more" href={withBase("/rss.xml")}>
+					RSS 订阅
+				</a>
+			</p>
+		</div>
+	</div>
+</div>
+
+<style>
+	.site-header {
+		--nav-scrim-solid: rgba(0, 0, 0, 0.45);
+		--nav-border: rgba(255, 255, 255, 0.14);
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: var(--z-header);
+		height: var(--header-h);
+		border-bottom: 1px solid transparent;
+		background: transparent;
+		transition:
+			background 620ms var(--ease-sway),
+			border-color 620ms var(--ease-sway),
+			box-shadow 620ms var(--ease-sway),
+			color 380ms var(--ease-mech);
+	}
+
+	.site-header.is-solid,
+	.site-header[data-over-hero="true"]:not(.is-solid) {
+		color: var(--media-ink);
+		--ink: var(--media-ink);
+		--ink-soft: var(--media-ink-soft);
+		--muted: var(--media-muted);
+		--line: var(--media-line);
+		--line-strong: var(--media-line-strong);
+		--accent: var(--media-accent);
+		--accent-ink: #04121a;
+	}
+
+	.site-header[data-over-hero="true"]:not(.is-solid) {
+		background: transparent;
+	}
+
+	.site-header.is-solid {
+		border-bottom-color: var(--nav-border);
+		background:
+			linear-gradient(
+				180deg,
+				rgba(255, 255, 255, 0.045) 0%,
+				transparent 48%
+			),
+			var(--nav-scrim-solid);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+		-webkit-backdrop-filter: blur(24px) saturate(155%);
+		backdrop-filter: blur(24px) saturate(155%);
+	}
+
+	.site-header.is-solid::after {
+		position: absolute;
+		bottom: -1px;
+		left: 0;
+		width: min(18vw, 180px);
+		height: 1px;
+		background: linear-gradient(90deg, var(--accent), transparent);
+		content: "";
+		opacity: 0.55;
+		pointer-events: none;
+	}
+
+	:global(:root[data-theme="dark"]) .site-header {
+		--nav-scrim-solid: rgba(0, 0, 0, 0.62);
+		--nav-border: rgba(255, 255, 255, 0.18);
+	}
+
+	.site-header__inner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		height: var(--header-h);
+	}
+
+	.brand {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	.brand__mark {
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		border: 1px solid transparent;
+		border-radius: 0;
+		background: var(--accent);
+		color: var(--accent-ink);
+		font-family: var(--font-chinese);
+		font-size: 0.92rem;
+		font-weight: 700;
+		line-height: 1;
+	}
+
+	.site-header.is-solid .brand__mark,
+	.site-header[data-over-hero="true"]:not(.is-solid) .brand__mark {
+		background: var(--media-ink);
+		color: #06121a;
+	}
+
+	.brand__logo {
+		width: 32px;
+		height: 32px;
+		object-fit: cover;
+	}
+
+	.brand__text {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		line-height: 1.1;
+		text-align: left;
+	}
+
+	.brand__cn {
+		color: var(--ink);
+		font-size: 0.9rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+	}
+
+	.brand__latin {
+		margin-top: 0.12rem;
+		color: var(--muted);
+		font-family: var(--font-latin);
+		font-size: 0.48rem;
+		font-stretch: 112%;
+		font-weight: 500;
+		letter-spacing: 0.24em;
+		text-transform: uppercase;
+	}
+
+	.site-nav ul {
+		display: flex;
+		align-items: center;
+		gap: 0.2rem;
+	}
+
+	.nav-link {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.05rem;
+		padding: 0.4rem 0.7rem;
+		text-align: center;
+	}
+
+	.nav-link::after {
+		content: "";
+		position: absolute;
+		left: 0.7rem;
+		right: 0.7rem;
+		bottom: 0.05rem;
+		height: 2px;
+		background: var(--accent);
+		transform: scaleX(0);
+		transform-origin: left;
+		transition: transform var(--dur-base) var(--ease-snap);
+	}
+
+	.nav-link:hover::after,
+	.nav-link.is-active::after {
+		transform: scaleX(1);
+	}
+
+	.nav-link__latin {
+		color: var(--muted);
+		font-family: var(--font-latin);
+		font-size: 0.46rem;
+		font-weight: 500;
+		letter-spacing: 0.16em;
+		line-height: 1.2;
+		text-transform: uppercase;
+		transition: opacity var(--dur-fast) var(--ease-mech);
+	}
+
+	.nav-link__cn {
+		color: var(--ink);
+		font-size: 0.8rem;
+		font-weight: 500;
+		line-height: 1.4;
+	}
+
+	.nav-link.is-active .nav-link__latin {
+		opacity: 1;
+	}
+
+	.nav-link.is-active .nav-link__cn {
+		font-weight: 600;
+	}
+
+	.site-header__actions {
+		display: flex;
+		flex: none;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.site-header__status {
+		margin-right: 0.2rem;
+	}
+
+	.site-header__menu {
+		display: none;
+	}
+
+	.theme-toggle__moon {
+		display: none;
+	}
+
+	:global(:root[data-theme="dark"]) .theme-toggle__sun {
+		display: none;
+	}
+
+	:global(:root[data-theme="dark"]) .theme-toggle__moon {
+		display: inline-flex;
+	}
+
+	/* 移动端菜单 ------------------------------------------------------------ */
+
+	.mobile-menu {
+		position: fixed;
+		inset: 0;
+		z-index: var(--z-drawer);
+		isolation: isolate;
+		overflow-y: auto;
+		background-color: #05131c;
+		background-image:
+			linear-gradient(rgba(3, 12, 19, 0.8), rgba(3, 12, 19, 0.86)),
+			var(--menu-bg);
+		background-position: center;
+		background-size: cover;
+		color: var(--media-ink);
+		--ink: var(--media-ink);
+		--ink-soft: var(--media-ink-soft);
+		--muted: var(--media-muted);
+		--line: var(--media-line);
+		--line-strong: var(--media-line-strong);
+		--accent: var(--media-accent);
+		--accent-ink: #04121a;
+		opacity: 0;
+		visibility: hidden;
+		transform: translateY(-12px);
+		transition:
+			opacity var(--dur-base) var(--ease-snap),
+			transform var(--dur-base) var(--ease-snap),
+			visibility var(--dur-base);
+	}
+
+	.mobile-menu.is-open {
+		opacity: 1;
+		visibility: visible;
+		transform: none;
+	}
+
+	.mobile-menu__inner {
+		display: flex;
+		flex-direction: column;
+		min-height: 100svh;
+		padding: calc(var(--header-h) + 1.2rem) var(--gutter) 2rem;
+	}
+
+	.mobile-menu__head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.mobile-nav {
+		display: flex;
+		flex-direction: column;
+		margin-top: clamp(1.5rem, 5vh, 3rem);
+		border-bottom: 1px solid var(--line);
+	}
+
+	.mobile-nav__link {
+		position: relative;
+		display: grid;
+		grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+		gap: 1rem;
+		align-items: center;
+		padding: 1rem 0.2rem;
+		border-top: 1px solid var(--line);
+	}
+
+	.mobile-nav__link::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: -1px;
+		bottom: -1px;
+		width: 2px;
+		background: var(--accent);
+		transform: scaleY(0);
+		transform-origin: top;
+		transition: transform var(--dur-base) var(--ease-snap);
+	}
+
+	.mobile-nav__link.is-active::before {
+		transform: scaleY(1);
+	}
+
+	.mobile-nav__index {
+		color: var(--muted);
+		font-family: var(--font-latin);
+		font-size: 0.64rem;
+		letter-spacing: 0.1em;
+	}
+
+	.mobile-nav__latin {
+		display: block;
+		color: var(--muted);
+		font-family: var(--font-latin);
+		font-size: 0.54rem;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+	}
+
+	.mobile-nav__cn {
+		display: block;
+		color: var(--ink);
+		font-size: 1.4rem;
+		font-weight: 600;
+		line-height: 1.4;
+	}
+
+	.mobile-nav__link.is-active .mobile-nav__index {
+		color: var(--accent);
+	}
+
+	.mobile-menu__foot {
+		display: flex;
+		flex-direction: column;
+		gap: 0.8rem;
+		margin-top: auto;
+		padding-top: 2.5rem;
+		color: var(--muted);
+		font-size: 0.84rem;
+	}
+
+	@media (max-width: 1180px) {
+		.site-header__status {
+			display: none;
+		}
+	}
+
+	@media (max-width: 900px) {
+		.site-nav {
+			display: none;
+		}
+
+		.site-header__menu {
+			display: inline-flex;
+		}
+	}
+
+	@media (max-width: 420px) {
+		.brand__latin {
+			display: none;
+		}
+	}
+</style>
