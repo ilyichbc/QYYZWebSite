@@ -263,14 +263,6 @@
   }
 }
 
-@media (max-width: 767px) {
-  .page-content__matrix,
-  .page-content__grid,
-  .page-hero__grid {
-    display: none;
-  }
-}
-
 /* 关于 ------------------------------------------------------------------ */
 
 .about-layout {

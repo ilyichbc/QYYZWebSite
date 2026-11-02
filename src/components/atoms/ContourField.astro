@@ -150,13 +150,7 @@ const contours = Array.from({ length: lineCount }, (_, index) => {
 		transition-delay: calc(var(--i, 0) * 60ms);
 	}
 
-	@media (max-width: 767px) {
-		.contour-field {
-			display: none;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
+		@media (prefers-reduced-motion: reduce) {
 		.contour-field__line {
 			stroke-dasharray: none !important;
 			stroke-dashoffset: 0 !important;

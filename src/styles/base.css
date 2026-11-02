@@ -249,6 +249,8 @@ html.js [data-reveal].is-visible {
   opacity: 1;
   transform: none;
   filter: none;
+  /* 揭示完成后释放合成层，避免几十个元素常驻 opacity/transform/filter 三层提示 */
+  will-change: auto;
 }
 
 html[data-motion="off"] [data-reveal] {
@@ -616,7 +618,7 @@ html[data-snap="on"][data-snap-fit="off"] {
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: reduce), (max-width: 767px) {
+@media (prefers-reduced-motion: reduce) {
   .section-spotlight {
     display: none;
   }
@@ -645,9 +647,10 @@ html[data-snap="on"][data-snap-fit="off"] {
       translate 180ms linear;
   }
 
+  /* 进入视口时播放一次镜头推移，之后静止；不再无限循环 */
   html.js[data-motion="on"] .home-section.is-in-view .home-section__bg,
   html.js[data-motion="on"] .page-hero.is-in-view .page-hero__bg {
-    animation: bg-kenburns 26s ease-in-out infinite alternate;
+    animation: bg-kenburns 1.6s var(--ease-mech) 1 both;
   }
 
   html.js[data-motion="on"] .home-section .section-head__title {
@@ -660,9 +663,10 @@ html[data-snap="on"][data-snap-fit="off"] {
     transition-delay: 140ms;
   }
 
+  /* 内容层视差同样只在进入视口时播放一次，避免整屏内容持续变换 */
   html.js[data-motion="on"] .home-section.is-in-view .home-section__inner,
   html.js[data-motion="on"] .page-hero.is-in-view .page-hero__inner {
-    animation: content-parallax 26s ease-in-out infinite alternate;
+    animation: content-parallax 1.6s var(--ease-mech) 1 both;
   }
 }
 

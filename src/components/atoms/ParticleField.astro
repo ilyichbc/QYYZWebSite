@@ -32,9 +32,13 @@ const enabled = motionConfig.enabled && motionConfig.decor.particles;
 		pointer-events: none;
 	}
 
-	@media (max-width: 767px) {
-		.particle-field {
-			display: none;
-		}
+	/* 区块粒子只有几十个，铺满整屏意味着每帧清空上百万像素却几乎画不出东西。
+	   收成局部方块，清屏面积降到约 1/8。 */
+	.particle-field--section {
+		inset: auto;
+		top: 8%;
+		right: 6%;
+		width: min(38rem, 42vw);
+		height: min(26rem, 38vh);
 	}
 </style>

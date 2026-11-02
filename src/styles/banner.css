@@ -621,7 +621,7 @@
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: reduce), (max-width: 767px) {
+@media (prefers-reduced-motion: reduce) {
   .hero__spotlight {
     display: none;
   }
@@ -659,12 +659,13 @@ html.js .hero.is-scanning .hero__name {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /* 首屏镜头推移只播放一次，不再无限缩放 3.8MP 背景图 */
   .hero[data-orbit="on"] .hero__bg {
-    animation: hero-kenburns 20s ease-in-out infinite alternate;
+    animation: hero-kenburns 1.6s var(--ease-mech) 1 both;
   }
 
   .hero[data-orbit="on"] .hero__inner {
-    animation: content-parallax 20s ease-in-out infinite alternate;
+    animation: content-parallax 1.6s var(--ease-mech) 1 both;
   }
 }
 
@@ -738,6 +739,11 @@ html.js .hero.is-scanning .hero__name {
   .hero__inner {
     padding-top: calc(var(--header-h) + 1rem);
     padding-bottom: 1rem;
+  }
+
+  /* 移动端不跑 10 个光点循环，减少合成层 */
+  .hero__motes {
+    display: none;
   }
 
   .hero__rail {

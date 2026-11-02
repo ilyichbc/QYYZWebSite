@@ -99,13 +99,7 @@ const drift = motionConfig.ambient.sectionDrift;
 		}
 	}
 
-	@media (max-width: 767px) {
-		.ray-field {
-			display: none;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
+		@media (prefers-reduced-motion: reduce) {
 		html.js[data-motion="on"] .ray-field {
 			opacity: var(--ray-opacity, 0.18);
 			clip-path: none !important;

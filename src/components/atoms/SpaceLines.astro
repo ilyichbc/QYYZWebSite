@@ -247,24 +247,7 @@ const ambientEnabled =
 		}
 	}
 
-	@media (max-width: 767px) {
-		.space-lines__arc,
-		.space-lines__arc--two,
-		.space-lines__cross--two {
-			display: none;
-		}
-
-		.space-lines__h {
-			opacity: 0.18;
-		}
-
-		.space-lines__trail {
-			width: 78%;
-			opacity: 0.3;
-		}
-	}
-
-	@media (prefers-reduced-motion: reduce) {
+		@media (prefers-reduced-motion: reduce) {
 		.space-lines__arc,
 		.space-lines__trail::after {
 			animation: none;

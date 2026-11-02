@@ -28,6 +28,34 @@ function syncPageVisibility() {
 syncPageVisibility();
 document.addEventListener("visibilitychange", syncPageVisibility);
 
+/**
+ * 把多个滚动回调合并到同一个 rAF 里执行。
+ * 每个回调都会读 layout（getBoundingClientRect / scrollHeight），
+ * 分开监听会让滚动时反复强制同步布局。
+ */
+const scrollHandlers: Array<() => void> = [];
+let scrollQueued = false;
+
+function onScrollFrame() {
+	if (scrollQueued) {
+		return;
+	}
+
+	scrollQueued = true;
+	requestAnimationFrame(() => {
+		scrollQueued = false;
+		for (const handler of scrollHandlers) {
+			handler();
+		}
+	});
+}
+
+function addScrollHandler(handler: () => void) {
+	scrollHandlers.push(handler);
+}
+
+window.addEventListener("scroll", onScrollFrame, { passive: true });
+
 /* ------------------------------------------------------------------ */
 /* 主题                                                                */
 /* ------------------------------------------------------------------ */
@@ -238,7 +266,7 @@ if (header) {
 		};
 
 		syncHeader();
-		window.addEventListener("scroll", syncHeader, { passive: true });
+		addScrollHandler(syncHeader);
 		window.addEventListener("resize", syncHeader);
 	}
 }
@@ -335,7 +363,7 @@ if (scrollTop) {
 	};
 
 	syncScrollTop();
-	window.addEventListener("scroll", syncScrollTop, { passive: true });
+	addScrollHandler(syncScrollTop);
 
 	scrollTop.addEventListener("click", () => {
 		if (!motionEnabled || reduceMotion) {
@@ -396,7 +424,7 @@ if (orbitProgress) {
 	};
 
 	syncOrbitProgress();
-	window.addEventListener("scroll", syncOrbitProgress, { passive: true });
+	addScrollHandler(syncOrbitProgress);
 	window.addEventListener("resize", syncOrbitProgress);
 }
 
@@ -640,16 +668,23 @@ if (
 	!reduceMotion
 ) {
 	let heroFrame = 0;
+	let pendingX = 0;
+	let pendingY = 0;
 
+	// 每帧只在 pointermove 真正发生时写一次变量。
+	// 把鼠标坐标合并到同一帧再写，避免高频事件触发的重复样式重算。
 	heroStage.addEventListener("pointermove", (event) => {
+		pendingX = event.clientX;
+		pendingY = event.clientY;
+
 		if (heroFrame) {
 			return;
 		}
 
 		heroFrame = requestAnimationFrame(() => {
 			heroFrame = 0;
-			const x = event.clientX / window.innerWidth - 0.5;
-			const y = event.clientY / window.innerHeight - 0.5;
+			const x = pendingX / window.innerWidth - 0.5;
+			const y = pendingY / window.innerHeight - 0.5;
 			heroStage.style.setProperty(
 				"--hero-px",
 				`${(x * 18).toFixed(1)}px`,
@@ -660,11 +695,11 @@ if (
 			);
 			heroStage.style.setProperty(
 				"--spot-x",
-				`${((event.clientX / window.innerWidth) * 100).toFixed(1)}%`,
+				`${((pendingX / window.innerWidth) * 100).toFixed(1)}%`,
 			);
 			heroStage.style.setProperty(
 				"--spot-y",
-				`${((event.clientY / window.innerHeight) * 100).toFixed(1)}%`,
+				`${((pendingY / window.innerHeight) * 100).toFixed(1)}%`,
 			);
 		});
 	});
@@ -739,7 +774,7 @@ if (
 	};
 
 	syncSectionShift();
-	window.addEventListener("scroll", onSectionScroll, { passive: true });
+	addScrollHandler(onSectionScroll);
 	window.addEventListener("resize", onSectionScroll);
 }
 
@@ -885,21 +920,27 @@ function initParticleField(canvas: HTMLCanvasElement) {
 		context.globalAlpha = 0.12;
 		context.strokeStyle = color;
 		context.lineWidth = 1;
+		context.beginPath();
+
+		const linkSq = 170 * 170;
 
 		for (let i = 0; i < particles.length; i += 1) {
+			const a = particles[i];
 			for (let j = i + 1; j < particles.length; j += 1) {
-				const a = particles[i];
 				const b = particles[j];
-				const distance = Math.hypot(a.x - b.x, a.y - b.y);
+				const dx = a.x - b.x;
+				const dy = a.y - b.y;
 
-				if (distance < 170) {
-					context.beginPath();
+				// 平方距离比较，省掉每对粒子的开方
+				if (dx * dx + dy * dy < linkSq) {
 					context.moveTo(a.x + a.ox, a.y + a.oy);
 					context.lineTo(b.x + b.ox, b.y + b.oy);
-					context.stroke();
 				}
 			}
 		}
+
+		// 整帧只描边一次，而不是每对粒子一次
+		context.stroke();
 
 		context.globalAlpha = 1;
 	};
@@ -929,6 +970,23 @@ function initParticleField(canvas: HTMLCanvasElement) {
 
 	if (!reduceMotion) {
 		start();
+
+		// 离屏暂停：区块滚出视口后停止绘制，避免整页多个 Canvas 同时跑
+		if ("IntersectionObserver" in window) {
+			const fieldIO = new IntersectionObserver(
+				(entries) => {
+					for (const entry of entries) {
+						if (entry.isIntersecting) {
+							start();
+						} else {
+							stop();
+						}
+					}
+				},
+				{ rootMargin: "150px" },
+			);
+			fieldIO.observe(canvas);
+		}
 
 		window.addEventListener("resize", () => {
 			resize();
@@ -985,6 +1043,8 @@ interface EchoParticle {
 	size: number;
 	color: string;
 	alpha: number;
+	/** 自主漂移相位，让粒子在无鼠标时也缓慢游荡 */
+	phase: number;
 }
 
 function initParticleEcho(canvas: HTMLCanvasElement) {
@@ -1018,7 +1078,9 @@ function initParticleEcho(canvas: HTMLCanvasElement) {
 		Math.min(0.6, Number(canvas.dataset.edgeFadeWidth) || 0.24),
 	);
 	const accent = getComputedStyle(canvas).color;
-	const dpr = Math.min(window.devicePixelRatio || 1, 2);
+	// 粒子回响是全屏画布，DPR 2 在 2x 屏上是 500 万+ 像素；
+	// 粒子是 1–3px 的小方块，降到 1.5 几乎看不出差别，像素量减少约 44%
+	const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 	const pointer = {
 		x: -9999,
 		y: -9999,
@@ -1027,6 +1089,8 @@ function initParticleEcho(canvas: HTMLCanvasElement) {
 		lastX: -1,
 		lastY: -1,
 	};
+	// 最近一次交互时间，用于无交互时降频而不是停帧
+	let lastInteraction = 0;
 	let width = 1;
 	let height = 1;
 	let particles: EchoParticle[] = [];
@@ -1233,6 +1297,7 @@ function initParticleEcho(canvas: HTMLCanvasElement) {
 				size: (1.4 + Math.random() * 1.8) * scale,
 				color: point.color,
 				alpha: alpha * opacity,
+				phase: Math.random() * Math.PI * 2,
 			});
 		}
 
@@ -1248,6 +1313,9 @@ function initParticleEcho(canvas: HTMLCanvasElement) {
 
 		const stirForce = (stir / 100) * 1.4;
 		const radius = 130;
+		// 自主漂移：即使没有鼠标，粒子也在目标点附近缓慢游荡，
+		// 而不是死贴目标点变成一张静态图
+		const driftT = performance.now() * 0.00035;
 
 		if (mode === "text") {
 			context.fillStyle = accent;
@@ -1255,14 +1323,21 @@ function initParticleEcho(canvas: HTMLCanvasElement) {
 
 		for (const particle of particles) {
 			if (animate) {
-				let ax = (particle.tx - particle.x) * particle.k;
-				let ay = (particle.ty - particle.y) * particle.k;
+				// 每个粒子绕目标点做小幅圆周漂移（半径约 2px，周期各不相同）
+				const wobble = driftT + particle.phase;
+				const driftX = Math.cos(wobble) * 2;
+				const driftY = Math.sin(wobble * 1.3) * 2;
+
+				let ax = (particle.tx + driftX - particle.x) * particle.k;
+				let ay = (particle.ty + driftY - particle.y) * particle.k;
 
 				const dx = particle.x - pointer.x;
 				const dy = particle.y - pointer.y;
-				const distance = Math.hypot(dx, dy);
+				const distSq = dx * dx + dy * dy;
 
-				if (distance > 0.1 && distance < radius) {
+				// 先用平方距离筛掉范围外的粒子，只有命中才开方
+				if (distSq > 0.01 && distSq < radius * radius) {
+					const distance = Math.sqrt(distSq);
 					const falloff = 1 - distance / radius;
 					ax += (-dy / distance) * stirForce * falloff;
 					ay += (dx / distance) * stirForce * falloff;
@@ -1299,8 +1374,21 @@ function initParticleEcho(canvas: HTMLCanvasElement) {
 			return;
 		}
 
-		const loop = () => {
-			render(true);
+		// 无交互时降到 20fps 持续漂移，有交互时回到 60fps。
+		// 粒子始终在动（保留「游荡」的观感），静止时 GPU 占用约 3%。
+		const IDLE_FPS = 20;
+		const IDLE_AFTER = 800;
+		let lastDraw = 0;
+
+		const loop = (now: number) => {
+			const idle = now - lastInteraction > IDLE_AFTER;
+			const interval = idle ? 1000 / IDLE_FPS : 0;
+
+			if (now - lastDraw >= interval) {
+				lastDraw = now;
+				render(true);
+			}
+
 			frame = requestAnimationFrame(loop);
 		};
 
@@ -1353,6 +1441,10 @@ function initParticleEcho(canvas: HTMLCanvasElement) {
 
 		pointer.lastX = pointer.x;
 		pointer.lastY = pointer.y;
+
+		// 记录交互时间并唤醒降频后的循环
+		lastInteraction = performance.now();
+		start();
 	});
 
 	document.addEventListener("pointerleave", () => {
@@ -1367,13 +1459,18 @@ function initParticleEcho(canvas: HTMLCanvasElement) {
 	window.addEventListener("click", (event) => {
 		const x = event.clientX;
 		const y = event.clientY;
+		lastInteraction = performance.now();
+		start();
+
+		const hitSq = 150 * 150;
 
 		for (const particle of particles) {
 			const dx = particle.x - x;
 			const dy = particle.y - y;
-			const distance = Math.hypot(dx, dy);
+			const distSq = dx * dx + dy * dy;
 
-			if (distance > 0.1 && distance < 150) {
+			if (distSq > 0.01 && distSq < hitSq) {
+				const distance = Math.sqrt(distSq);
 				const force = (1 - distance / 150) * 2.2;
 				particle.vx += (-dy / distance) * force;
 				particle.vy += (dx / distance) * force;

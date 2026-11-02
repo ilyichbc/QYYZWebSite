@@ -548,7 +548,8 @@ html.js [data-reveal] .barcode__bar {
 
 html.js [data-reveal].is-visible .barcode__bar {
   opacity: 1;
-  transform: scaleY(1);
+  /* 动画结束后回到 none：scaleY(1) 仍是变换，会让每根条柱各占一个合成层 */
+  transform: none;
 }
 
 .barcode__label {
